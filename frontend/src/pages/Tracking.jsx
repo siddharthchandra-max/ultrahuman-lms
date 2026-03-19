@@ -161,6 +161,16 @@ export default function Tracking() {
           <option>B2B</option>
           <option>BBX</option>
         </select>
+        <select className="filter-select" value={filters.tatStatus || ''} onChange={e => setFilters(f => ({ ...f, tatStatus: e.target.value || undefined }))}>
+          <option value="">Shipment Status TAT</option>
+          <option>Delayed</option>
+          <option>On-time</option>
+        </select>
+        <select className="filter-select" value={filters.orderType || ''} onChange={e => setFilters(f => ({ ...f, orderType: e.target.value || undefined }))}>
+          <option value="">Shipment Order Type</option>
+          <option>COD Order</option>
+          <option>Prepaid Order</option>
+        </select>
       </div>
 
       {/* Status Tabs */}
