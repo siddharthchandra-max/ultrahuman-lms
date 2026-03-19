@@ -25,13 +25,7 @@ export default function Login({ onLogin }) {
     <div className="login-page">
       {/* Left — Dark Hero */}
       <div className="login-hero">
-        {/* Ultrahuman Logo */}
-        <div className="login-hero-brand">
-          <svg className="uh-logo" viewBox="0 0 200 32" fill="none">
-            <path d="M13 1L1 13h8v8h5v-13h8z" fill="#fff" transform="scale(1.1) translate(0,1)"/>
-            <text x="38" y="23" fill="#fff" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="1.5">ULTRAHUMAN</text>
-          </svg>
-        </div>
+        <div className="login-hero-brand" />
 
         {/* Central visual */}
         <div className="login-hero-center">
@@ -79,12 +73,6 @@ export default function Login({ onLogin }) {
       {/* Right — Form */}
       <div className="login-form-side">
         <div className="login-form-container">
-          <div className="login-form-logo">
-            <svg viewBox="0 0 200 32" fill="none" style={{ height: 26 }}>
-              <path d="M13 1L1 13h8v8h5v-13h8z" fill="#000" transform="scale(1.1) translate(0,1)"/>
-              <text x="38" y="23" fill="#000" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="1.5">ULTRAHUMAN</text>
-            </svg>
-          </div>
 
           <h1>Welcome back</h1>
           <p className="login-form-desc">Sign in to your UH-LMS account</p>
