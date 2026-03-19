@@ -562,6 +562,13 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   border-radius: 6px; white-space: nowrap; display: flex; align-items: center;
 }
 .date-badge:hover { border-color: var(--accent); color: var(--gray-700); }
+.btn-bulk-mgmt {
+  display: flex; align-items: center; gap: 6px; padding: 7px 16px;
+  background: var(--navy); color: #fff; border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  white-space: nowrap; transition: background 0.2s;
+}
+.btn-bulk-mgmt:hover { background: var(--navy-light); }
 /* Date Range Picker */
 .drp-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
