@@ -28,7 +28,17 @@ export default function Dashboard() {
       <p style={{ fontWeight: 500 }}>Loading dashboard...</p>
     </div>
   );
-  if (!data) return <div style={{ padding: 60, color: 'var(--red)' }}>Failed to load dashboard data</div>;
+  if (!data || !data.totals) return (
+    <div style={{ padding: 80, textAlign: 'center' }}>
+      <div style={{ fontSize: 48, marginBottom: 16, color: 'var(--gray-300)' }}>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3 style={{ color: 'var(--gray-600)', marginBottom: 8, fontSize: 16 }}>No Data Yet</h3>
+      <p style={{ color: 'var(--gray-400)', fontSize: 13, maxWidth: 360, margin: '0 auto' }}>
+        Upload your DHL billing files from the <strong>Upload Data</strong> page to see your dashboard metrics and analytics.
+      </p>
+    </div>
+  );
 
   const { totals, byProduct, byCountry, byMonth, byStatus } = data;
   const duties = byProduct.find(p => p._id === 'DUTIES & TAXES')?.count || 0;
