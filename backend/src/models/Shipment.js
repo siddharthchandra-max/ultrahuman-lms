@@ -60,6 +60,30 @@ const shipmentSchema = new mongoose.Schema({
   courier: { type: String, default: 'DHL' },
   sourceFile: String,
 
+  // Source/Destination details
+  sourceCity: String,
+  sourcePincode: String,
+  sourceZone: String,
+  sourceState: String,
+  sourceCountry: String,
+  destCity: String,
+  destPincode: String,
+  destZone: String,
+  destState: String,
+  destCountry: String,
+
+  // Additional fields
+  warehouse: String,
+  edd: Date,
+  uploadDate: Date,
+  dispatchDate: Date,
+  tat: String,
+  movementType: String,
+  shippingMethod: String,
+  sku: String,
+  facilityCode: String,
+  facilityName: String,
+
   // Tracking
   trackingEvents: [trackingEventSchema],
   trackingStatus: {

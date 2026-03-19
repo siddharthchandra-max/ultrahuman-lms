@@ -1,11 +1,14 @@
 import React, { useState, useRef } from 'react';
+import api from '../utils/api';
 
 const TABS = ['Edit Bulk Shipments', 'Disable Bulk Shipments', 'Update Bulk Status'];
 
-export default function BulkManagement({ onClose }) {
+export default function BulkManagement({ onClose, onUploadSuccess }) {
   const [activeTab, setActiveTab] = useState(0);
   const [file, setFile] = useState(null);
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState(null);
   const fileRef = useRef();
 
   const handleDrop = (e) => {
@@ -19,10 +22,23 @@ export default function BulkManagement({ onClose }) {
     if (e.target.files[0]) setFile(e.target.files[0]);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!file) return;
-    // TODO: upload file to backend
-    onClose();
+    setUploading(true);
+    setResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/shipments/bulk-upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setResult(data);
+      if (onUploadSuccess) onUploadSuccess();
+    } catch (err) {
+      setResult({ error: err.response?.data?.error || 'Upload failed' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -35,7 +51,7 @@ export default function BulkManagement({ onClose }) {
 
         <div className="bulk-tabs">
           {TABS.map((tab, i) => (
-            <div key={tab} className={`bulk-tab${activeTab === i ? ' active' : ''}`} onClick={() => { setActiveTab(i); setFile(null); }}>
+            <div key={tab} className={`bulk-tab${activeTab === i ? ' active' : ''}`} onClick={() => { setActiveTab(i); setFile(null); setResult(null); }}>
               {tab}
             </div>
           ))}
@@ -75,6 +91,15 @@ export default function BulkManagement({ onClose }) {
             )}
           </div>
 
+          {result && (
+            <div style={{ marginTop: 16, padding: 12, borderRadius: 8, fontSize: 13, fontWeight: 600, background: result.error ? '#fee2e2' : '#d1fae5', color: result.error ? '#991b1b' : '#065f46' }}>
+              {result.error
+                ? `Error: ${result.error}`
+                : `Uploaded successfully! ${result.inserted} new, ${result.updated} updated out of ${result.total} rows.${result.errors?.length ? ` ${result.errors.length} rows skipped.` : ''}`
+              }
+            </div>
+          )}
+
           <div className="bulk-info">
             <p>Data in the file should be in correct format. <a href="/bulk-shipment-template.xlsx" download className="bulk-template-link">Download the .xlsx template here.</a></p>
           </div>
@@ -82,7 +107,9 @@ export default function BulkManagement({ onClose }) {
 
         <div className="bulk-footer">
           <button className="bulk-btn-cancel" onClick={onClose}>Cancel</button>
-          <button className="bulk-btn-confirm" disabled={!file} onClick={handleConfirm}>Confirm</button>
+          <button className="bulk-btn-confirm" disabled={!file || uploading} onClick={handleConfirm}>
+            {uploading ? 'Uploading...' : 'Confirm'}
+          </button>
         </div>
       </div>
     </div>
