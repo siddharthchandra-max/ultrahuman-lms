@@ -201,17 +201,31 @@ export default function Tracking() {
               <tr>
                 <th style={{ width: 30 }}><input type="checkbox" /></th>
                 <th>AWB No.</th>
-                <th>Courier</th>
+                <th>Courier Name</th>
                 <th>Booked Date</th>
                 <th>Dispatch Date</th>
                 <th>Week</th>
-                <th>Destination</th>
+                <th>Source City</th>
+                <th>Destination Country</th>
                 <th>Delay Days</th>
                 <th>Transit Days</th>
-                <th>Weight</th>
-                <th>Amount</th>
-                <th>Product</th>
-                <th>Warehouse</th>
+                <th>TAT</th>
+                <th>Upload Date</th>
+                <th>Logistics Type</th>
+                <th>Shipment Type</th>
+                <th>Source Pincode</th>
+                <th>Source Zone</th>
+                <th>Source Country</th>
+                <th>Source State</th>
+                <th>Destination City</th>
+                <th>Destination Pincode</th>
+                <th>Destination Zone</th>
+                <th>Destination State</th>
+                <th>Shipment Weight</th>
+                <th>EDD</th>
+                <th>Shipment Status Time</th>
+                <th>Shipment Status Description</th>
+                <th>Shipment Status Event</th>
                 <th>Last Synced</th>
                 <th>Shipment Status</th>
                 <th>TAT Status</th>
@@ -221,24 +235,38 @@ export default function Tracking() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={18} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>Loading...</td></tr>
+                <tr><td colSpan={32} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>Loading...</td></tr>
               ) : shipments.length === 0 ? (
-                <tr><td colSpan={18} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>No shipments found</td></tr>
+                <tr><td colSpan={32} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>No shipments found</td></tr>
               ) : shipments.map((s, i) => (
                 <tr key={s._id || i}>
                   <td><input type="checkbox" /></td>
                   <td style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 12 }}>{s.awb}</td>
                   <td><span style={{ fontWeight: 700, color: '#c00', fontSize: 11, letterSpacing: 0.5 }}>{s.courier || 'DHL'}</span></td>
                   <td>{formatDate(s.shipmentDate)}</td>
-                  <td>{s.trackingStatus?.lastEventTime ? formatDate(s.trackingStatus.lastEventTime) : '-'}</td>
+                  <td>{s.dispatchDate ? formatDate(s.dispatchDate) : '-'}</td>
                   <td>{s.week || '-'}</td>
-                  <td>{s.destName || s.destCode || '-'}</td>
+                  <td>{s.sourceCity || '-'}</td>
+                  <td>{s.destCountry || s.destName || s.destCode || '-'}</td>
                   <td style={{ color: 'var(--gray-400)' }}>-</td>
                   <td>{daysSince(s.shipmentDate)}</td>
+                  <td>{s.tat || '-'}</td>
+                  <td>{s.uploadDate ? formatDate(s.uploadDate) : '-'}</td>
+                  <td>{s.logisticsType || '-'}</td>
+                  <td>{s.shipmentType || '-'}</td>
+                  <td>{s.sourcePincode || '-'}</td>
+                  <td>{s.sourceZone || '-'}</td>
+                  <td>{s.sourceCountry || '-'}</td>
+                  <td>{s.sourceState || '-'}</td>
+                  <td>{s.destCity || '-'}</td>
+                  <td>{s.destPincode || '-'}</td>
+                  <td>{s.destZone || '-'}</td>
+                  <td>{s.destState || '-'}</td>
                   <td>{s.weight ? `${s.weight.toFixed(1)}` : '-'}</td>
-                  <td>{s.totalInclVAT ? formatINR(s.totalInclVAT) : '-'}</td>
-                  <td style={{ fontSize: 11, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.productName || '-'}</td>
-                  <td>{s.warehouse || '-'}</td>
+                  <td>{s.edd ? formatDate(s.edd) : '-'}</td>
+                  <td style={{ fontSize: 11 }}>{s.trackingStatus?.lastEventTime ? formatDate(s.trackingStatus.lastEventTime) : '-'}</td>
+                  <td style={{ fontSize: 11, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.trackingStatus?.lastEvent || '-'}</td>
+                  <td style={{ fontSize: 11 }}>{s.trackingStatus?.currentMilestone || '-'}</td>
                   <td style={{ fontSize: 11, color: 'var(--gray-400)' }}>{timeSince(s.updatedAt)}</td>
                   <td>{statusBadge(s.status)}</td>
                   <td>{tatBadge()}</td>
