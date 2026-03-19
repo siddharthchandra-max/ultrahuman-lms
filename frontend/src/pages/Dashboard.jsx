@@ -28,7 +28,7 @@ export default function Dashboard() {
       <p style={{ fontWeight: 500 }}>Loading dashboard...</p>
     </div>
   );
-  if (!data || !data.totals) return (
+  if (!data || !data.totals || data.totals.total === 0) return (
     <div style={{ padding: 80, textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16, color: 'var(--gray-300)' }}>
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
