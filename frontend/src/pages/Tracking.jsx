@@ -41,7 +41,7 @@ export default function Tracking() {
       const params = { page, limit: 50, sortBy: 'shipmentDate', sortOrder: -1 };
       if (search) params.search = search;
       if (activeTab) params.status = activeTab;
-      if (filters.month) params.month = filters.month;
+      if (filters.warehouse) params.warehouse = filters.warehouse;
       if (filters.destCode) params.destCode = filters.destCode;
       if (filters.product) params.product = filters.product;
       if (dateFrom) params.dateFrom = dateFrom;
@@ -149,9 +149,11 @@ export default function Tracking() {
           <option value="">Courier Name</option>
           <option>DHL</option>
         </select>
-        <select className="filter-select" value={filters.month || ''} onChange={e => setFilters(f => ({ ...f, month: e.target.value || undefined }))}>
-          <option value="">Month</option>
-          {filterOpts.months.map(m => <option key={m} value={m}>{m}</option>)}
+        <select className="filter-select" value={filters.warehouse || ''} onChange={e => setFilters(f => ({ ...f, warehouse: e.target.value || undefined }))}>
+          <option value="">Warehouse</option>
+          <option>Mumbai</option>
+          <option>Delhi</option>
+          <option>Bangalore</option>
         </select>
         <select className="filter-select" value={filters.destCode || ''} onChange={e => setFilters(f => ({ ...f, destCode: e.target.value || undefined }))}>
           <option value="">Destination Country</option>
@@ -195,7 +197,7 @@ export default function Tracking() {
                 <th>Weight</th>
                 <th>Amount</th>
                 <th>Product</th>
-                <th>Month</th>
+                <th>Warehouse</th>
                 <th>Last Synced</th>
                 <th>Shipment Status</th>
                 <th>TAT Status</th>
@@ -222,7 +224,7 @@ export default function Tracking() {
                   <td>{s.weight ? `${s.weight.toFixed(1)}` : '-'}</td>
                   <td>{s.totalInclVAT ? formatINR(s.totalInclVAT) : '-'}</td>
                   <td style={{ fontSize: 11, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.productName || '-'}</td>
-                  <td>{s.month}</td>
+                  <td>{s.warehouse || '-'}</td>
                   <td style={{ fontSize: 11, color: 'var(--gray-400)' }}>{timeSince(s.updatedAt)}</td>
                   <td>{statusBadge(s.status)}</td>
                   <td>{tatBadge()}</td>
