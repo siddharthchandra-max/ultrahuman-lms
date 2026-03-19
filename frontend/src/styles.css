@@ -533,10 +533,30 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   width: 14px; height: 14px; stroke: var(--gray-400); fill: none;
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
+.date-range-wrap { position: relative; }
 .date-badge {
   font-size: 11px; font-weight: 600; color: var(--gray-500);
   padding: 6px 12px; background: var(--gray-50); border: 1px solid var(--gray-200);
-  border-radius: 6px; white-space: nowrap;
+  border-radius: 6px; white-space: nowrap; display: flex; align-items: center;
+}
+.date-badge:hover { border-color: var(--accent); color: var(--gray-700); }
+.date-picker-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+  background: #fff; border: 1px solid var(--gray-200); border-radius: 8px;
+  padding: 12px; box-shadow: var(--shadow-md); min-width: 220px;
+}
+.date-picker-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.date-picker-row label {
+  font-size: 11px; font-weight: 600; color: var(--gray-500); width: 36px;
+}
+.date-picker-row input[type="date"] {
+  flex: 1; padding: 6px 8px; border: 1px solid var(--gray-200); border-radius: 6px;
+  font-size: 12px; font-family: inherit; color: var(--gray-800); outline: none;
+}
+.date-picker-row input[type="date"]:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,92,231,0.1);
 }
 
 .tracking-filters {

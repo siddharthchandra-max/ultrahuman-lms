@@ -20,6 +20,9 @@ export default function Tracking() {
   const [loading, setLoading] = useState(true);
   const [statusCounts, setStatusCounts] = useState({});
   const [viewMode, setViewMode] = useState('AWB');
+  const [dateFrom, setDateFrom] = useState('2025-12-01');
+  const [dateTo, setDateTo] = useState('2026-02-28');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
@@ -40,12 +43,14 @@ export default function Tracking() {
       if (filters.month) params.month = filters.month;
       if (filters.destCode) params.destCode = filters.destCode;
       if (filters.product) params.product = filters.product;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
       const { data } = await api.get('/shipments', { params });
       setShipments(data.shipments);
       setPagination(data.pagination);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [search, activeTab, filters]);
+  }, [search, activeTab, filters, dateFrom, dateTo]);
 
   useEffect(() => { fetch(1); }, [fetch]);
 
@@ -120,7 +125,27 @@ export default function Tracking() {
             />
             <svg className="tracking-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </div>
-          <div className="date-badge">01-Dec-2025 - 28-Feb-2026</div>
+          <div className="date-range-wrap">
+            <div className="date-badge" onClick={() => setShowDatePicker(!showDatePicker)} style={{ cursor: 'pointer' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              {new Date(dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} - {new Date(dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </div>
+            {showDatePicker && (
+              <div className="date-picker-dropdown">
+                <div className="date-picker-row">
+                  <label>From</label>
+                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                </div>
+                <div className="date-picker-row">
+                  <label>To</label>
+                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                </div>
+                <button className="btn btn-sm" style={{ width: '100%', marginTop: 8, background: 'var(--navy)', color: '#fff', border: 'none' }} onClick={() => setShowDatePicker(false)}>Apply</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
