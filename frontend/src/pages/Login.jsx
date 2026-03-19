@@ -27,7 +27,11 @@ export default function Login({ onLogin }) {
       <div className="login-hero">
         {/* Ultrahuman Logo */}
         <div className="login-hero-brand">
-          <img src="https://www.ultrahuman.com/logo.png" alt="Ultrahuman" className="uh-logo" />
+          <svg className="uh-logo" viewBox="0 0 120 28" fill="none">
+            <path d="M14 0L0 14l14 14L28 14 14 0z" fill="#fff"/>
+            <path d="M14 6l-8 8 8 8 8-8-8-8z" fill="#000"/>
+            <text x="34" y="20" fill="#fff" fontSize="16" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="-0.5">ULTRAHUMAN</text>
+          </svg>
         </div>
 
         {/* Central visual */}
@@ -77,7 +81,11 @@ export default function Login({ onLogin }) {
       <div className="login-form-side">
         <div className="login-form-container">
           <div className="login-form-logo">
-            <img src="https://www.ultrahuman.com/logo.png" alt="Ultrahuman" style={{ height: 18, filter: 'invert(1)', opacity: 0.8 }} />
+            <svg viewBox="0 0 120 28" fill="none" style={{ height: 22 }}>
+              <path d="M14 0L0 14l14 14L28 14 14 0z" fill="#000"/>
+              <path d="M14 6l-8 8 8 8 8-8-8-8z" fill="#fff"/>
+              <text x="34" y="20" fill="#000" fontSize="16" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="-0.5">ULTRAHUMAN</text>
+            </svg>
           </div>
 
           <h1>Welcome back</h1>

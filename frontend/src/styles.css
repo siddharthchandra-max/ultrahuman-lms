@@ -305,7 +305,7 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .login-hero-brand {
   padding: 32px 40px; position: relative; z-index: 2;
 }
-.uh-logo { height: 18px; opacity: 0.9; }
+.uh-logo { height: 24px; }
 
 .login-hero-center {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
