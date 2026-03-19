@@ -23,69 +23,65 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="login-page">
-      {/* Left — Hero */}
+      {/* Left — Dark Hero */}
       <div className="login-hero">
+        {/* Ultrahuman Logo */}
         <div className="login-hero-brand">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-          <span>UH-LMS</span>
+          <img src="https://www.ultrahuman.com/logo.png" alt="Ultrahuman" className="uh-logo" />
         </div>
 
-        <div className="login-hero-content">
-          {/* Floating feature cards */}
-          <div className="hero-feature" style={{ top: '18%', left: '22%' }}>
-            <div className="hero-feature-icon">
-              <svg viewBox="0 0 24 24"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        {/* Central visual */}
+        <div className="login-hero-center">
+          <div className="hero-ring-glow" />
+          <div className="hero-glass-card">
+            <div className="glass-metric">
+              <div className="glass-metric-icon blue">
+                <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <div>
+                <div className="glass-metric-value">12,847</div>
+                <div className="glass-metric-label">Shipments Tracked</div>
+              </div>
             </div>
-            <span>Shipments</span>
+            <div className="glass-divider" />
+            <div className="glass-metric">
+              <div className="glass-metric-icon green">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <div className="glass-metric-value">98.2%</div>
+                <div className="glass-metric-label">Delivery Rate</div>
+              </div>
+            </div>
+            <div className="glass-divider" />
+            <div className="glass-metric">
+              <div className="glass-metric-icon orange">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <div>
+                <div className="glass-metric-value">121</div>
+                <div className="glass-metric-label">Countries</div>
+              </div>
+            </div>
           </div>
 
-          <div className="hero-feature" style={{ top: '35%', left: '50%' }}>
-            <div className="hero-feature-icon orange">
-              <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            </div>
-            <span>Real Time Tracking</span>
+          <div className="hero-tagline">
+            <span className="hero-tag">Logistics Management System</span>
+            <h2>Track. Reconcile.<br/><span>Optimize.</span></h2>
+            <p>Real-time shipment tracking & financial reconciliation for global logistics operations.</p>
           </div>
-
-          <div className="hero-feature" style={{ top: '55%', left: '18%' }}>
-            <div className="hero-feature-icon green">
-              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            </div>
-            <span>Invoice Reconciliation</span>
-          </div>
-
-          <div className="hero-feature" style={{ top: '48%', left: '55%' }}>
-            <div className="hero-feature-icon purple">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            </div>
-            <span>Analytics</span>
-          </div>
-
-          <div className="hero-feature" style={{ top: '72%', left: '40%' }}>
-            <div className="hero-feature-icon">
-              <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <span style={{ color: '#0efc6d' }}>Delivered</span>
-          </div>
-
-          {/* Connecting dots */}
-          <div className="hero-dot" style={{ top: '30%', left: '42%' }} />
-          <div className="hero-dot" style={{ top: '50%', left: '38%' }} />
-          <div className="hero-dot small" style={{ top: '65%', left: '55%' }} />
         </div>
       </div>
 
       {/* Right — Form */}
       <div className="login-form-side">
         <div className="login-form-container">
-          <h1>Welcome to <span className="text-accent">UH-LMS</span></h1>
-          <div className="login-subtitle">Logistics Management & Intelligence Platform</div>
+          <div className="login-form-logo">
+            <img src="https://www.ultrahuman.com/logo.png" alt="Ultrahuman" style={{ height: 18, filter: 'invert(1)', opacity: 0.8 }} />
+          </div>
 
-          <div className="login-section-title">Sign in to your account</div>
-          <p className="login-section-desc">Enter your credentials to access the dashboard</p>
+          <h1>Welcome back</h1>
+          <p className="login-form-desc">Sign in to your UH-LMS account</p>
 
           <form onSubmit={handleSubmit}>
             {error && <div className="login-error">{error}</div>}
@@ -94,7 +90,7 @@ export default function Login({ onLogin }) {
               <label>Email</label>
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="you@ultrahuman.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -105,7 +101,7 @@ export default function Login({ onLogin }) {
               <label>Password</label>
               <input
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Enter password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
