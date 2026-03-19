@@ -107,7 +107,7 @@ export default function Tracking() {
   };
 
   return (
-    <div>
+    <div className="tracking-page">
       {/* Top bar */}
       <div className="tracking-topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -178,8 +178,8 @@ export default function Tracking() {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ borderRadius: 0, border: 'none', boxShadow: 'none' }}>
-        <div className="table-wrap" style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div className="table-wrap" style={{ height: '100%', overflowY: 'auto', overflowX: 'auto' }}>
           <table className="tracking-table">
             <thead>
               <tr>
