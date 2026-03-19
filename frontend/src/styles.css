@@ -142,6 +142,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 .main-wrapper { margin-left: 240px; transition: margin-left 0.25s ease; min-height: 100vh; }
 .sidebar.collapsed ~ .main-wrapper { margin-left: 68px; }
 .main { padding: 24px 28px; margin-top: 64px; max-width: 1480px; }
+.main-wrapper.no-sidebar { margin-left: 0; }
+.main-wrapper.no-sidebar .header { left: 0; }
 
 /* ====== CARDS ====== */
 .card {

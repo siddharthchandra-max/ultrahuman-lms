@@ -47,10 +47,12 @@ export default function App() {
     '/upload': 'Upload Data',
   };
 
+  const isTracking = location.pathname === '/tracking';
+
   return (
     <>
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      <div className="main-wrapper">
+      {!isTracking && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />}
+      <div className={`main-wrapper${isTracking ? ' no-sidebar' : ''}`}>
         <Header title={pageTitles[location.pathname] || 'Dashboard'} user={user} onLogout={handleLogout} />
         <div className="main">
           <Routes>
