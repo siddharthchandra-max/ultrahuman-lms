@@ -76,12 +76,6 @@ export default function BulkManagement({ onClose }) {
           </div>
 
           <div className="bulk-info">
-            <div className="bulk-info-row">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-              </svg>
-              Max. entries allowed : 999
-            </div>
             <p>Data in the file should be in correct format. <a href="#" className="bulk-template-link">Download the .xlsx template here.</a></p>
           </div>
         </div>
