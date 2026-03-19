@@ -569,6 +569,77 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   white-space: nowrap; transition: background 0.2s;
 }
 .btn-bulk-mgmt:hover { background: var(--navy-light); }
+
+/* Bulk Management Modal */
+.bulk-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.bulk-modal {
+  background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  width: 90%; max-width: 640px; max-height: 90vh; overflow-y: auto;
+}
+.bulk-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px;
+}
+.bulk-header h2 { font-size: 18px; font-weight: 700; color: var(--gray-900); }
+.bulk-close {
+  font-size: 28px; color: var(--gray-400); cursor: pointer; line-height: 1;
+  transition: color 0.2s;
+}
+.bulk-close:hover { color: var(--gray-800); }
+.bulk-tabs {
+  display: flex; border-bottom: 2px solid var(--gray-100); padding: 0 24px;
+}
+.bulk-tab {
+  padding: 10px 20px; font-size: 13px; font-weight: 600; color: var(--gray-400);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.bulk-tab:hover { color: var(--gray-700); }
+.bulk-tab.active { color: #4361ee; border-bottom-color: #4361ee; }
+.bulk-body { padding: 24px; }
+.bulk-upload-title {
+  font-size: 15px; font-weight: 600; color: var(--gray-800);
+  text-align: center; margin-bottom: 20px;
+}
+.bulk-dropzone {
+  border: 2px dashed #4361ee; border-radius: 12px; padding: 40px 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; min-height: 180px;
+  background: rgba(67,97,238,0.02);
+}
+.bulk-dropzone:hover, .bulk-dropzone.dragging {
+  background: rgba(67,97,238,0.06); border-color: #3651d4;
+}
+.bulk-file-info { text-align: center; }
+.bulk-info { margin-top: 16px; }
+.bulk-info-row {
+  display: flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--gray-500); margin-bottom: 6px;
+}
+.bulk-info p { font-size: 12px; color: var(--gray-500); }
+.bulk-template-link { color: #4361ee; font-weight: 600; text-decoration: none; }
+.bulk-template-link:hover { text-decoration: underline; }
+.bulk-footer {
+  display: flex; justify-content: flex-end; gap: 12px;
+  padding: 16px 24px; border-top: 1px solid var(--gray-100);
+}
+.bulk-btn-cancel {
+  padding: 10px 32px; border: 1px solid var(--gray-200); border-radius: 8px;
+  background: #fff; font-size: 13px; font-weight: 600; color: var(--gray-700);
+  cursor: pointer; font-family: inherit;
+}
+.bulk-btn-cancel:hover { background: var(--gray-50); }
+.bulk-btn-confirm {
+  padding: 10px 32px; border: none; border-radius: 8px;
+  background: #4361ee; font-size: 13px; font-weight: 600; color: #fff;
+  cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+}
+.bulk-btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+.bulk-btn-confirm:not(:disabled):hover { background: #3651d4; }
 /* Date Range Picker */
 .drp-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;

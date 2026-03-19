@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api, { formatINR, formatDate } from '../utils/api';
 import DateRangePicker from '../components/DateRangePicker';
+import BulkManagement from '../components/BulkManagement';
 
 const STATUS_TABS = [
   { key: '', label: 'All' },
@@ -24,6 +25,7 @@ export default function Tracking() {
   const [dateFrom, setDateFrom] = useState('2025-12-01');
   const [dateTo, setDateTo] = useState('2026-02-28');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
@@ -141,10 +143,11 @@ export default function Tracking() {
             />
           )}
         </div>
-        <button className="btn-bulk-mgmt">
+        <button className="btn-bulk-mgmt" onClick={() => setShowBulk(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           Bulk Management
         </button>
+        {showBulk && <BulkManagement onClose={() => setShowBulk(false)} />}
       </div>
 
       {/* Filters */}
