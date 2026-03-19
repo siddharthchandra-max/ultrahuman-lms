@@ -155,14 +155,11 @@ export default function Tracking() {
           <option>Delhi</option>
           <option>Bangalore</option>
         </select>
-        <select className="filter-select" value={filters.destCode || ''} onChange={e => setFilters(f => ({ ...f, destCode: e.target.value || undefined }))}>
-          <option value="">Destination Country</option>
-          {filterOpts.countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
-        </select>
-        <select className="filter-select">
+        <select className="filter-select" value={filters.shipmentType || ''} onChange={e => setFilters(f => ({ ...f, shipmentType: e.target.value || undefined }))}>
           <option value="">Shipment Type</option>
-          <option>EXPRESS WORLDWIDE</option>
-          <option>DUTIES & TAXES</option>
+          <option>B2C</option>
+          <option>B2B</option>
+          <option>BBX</option>
         </select>
       </div>
 
