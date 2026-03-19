@@ -68,7 +68,7 @@ export default function BulkManagement({ onClose }) {
                   <circle cx="44" cy="16" r="10" fill="#4361ee"/>
                   <text x="44" y="20" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="700">1</text>
                 </svg>
-                <p style={{ marginTop: 12, fontSize: 13, color: 'var(--gray-500)' }}>
+                <p style={{ marginTop: 12, fontSize: 13, color: '#000' }}>
                   Drag and Drop, or <span style={{ color: '#4361ee', fontWeight: 600, cursor: 'pointer' }}>Browse</span> from your system
                 </p>
               </>
