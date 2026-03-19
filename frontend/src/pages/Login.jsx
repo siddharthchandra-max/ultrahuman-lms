@@ -28,7 +28,7 @@ export default function Login({ onLogin }) {
         {/* Ultrahuman Logo */}
         <div className="login-hero-brand">
           <svg className="uh-logo" viewBox="0 0 200 32" fill="none">
-            <path d="M11.5 2L2 11.5h7v7L18.5 9h-7V2z" fill="#fff" transform="scale(1.4)"/>
+            <path d="M13 1L1 13h8v8h5v-13h8z" fill="#fff" transform="scale(1.1) translate(0,1)"/>
             <text x="38" y="23" fill="#fff" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="1.5">ULTRAHUMAN</text>
           </svg>
         </div>
@@ -81,7 +81,7 @@ export default function Login({ onLogin }) {
         <div className="login-form-container">
           <div className="login-form-logo">
             <svg viewBox="0 0 200 32" fill="none" style={{ height: 26 }}>
-              <path d="M11.5 2L2 11.5h7v7L18.5 9h-7V2z" fill="#000" transform="scale(1.4)"/>
+              <path d="M13 1L1 13h8v8h5v-13h8z" fill="#000" transform="scale(1.1) translate(0,1)"/>
               <text x="38" y="23" fill="#000" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="1.5">ULTRAHUMAN</text>
             </svg>
           </div>

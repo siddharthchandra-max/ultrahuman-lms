@@ -46,7 +46,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <div className="sidebar-brand">
         <div className="brand-icon">
           <svg viewBox="0 0 20 20" fill="none">
-            <path d="M10 1L1.5 9.5h6v6L16 7h-6V1z" fill="#fff"/>
+            <path d="M10.5 1L1 10.5h6v6h4V10.5h6z" fill="#fff"/>
           </svg>
         </div>
         {!collapsed && (
