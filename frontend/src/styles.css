@@ -507,6 +507,81 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 }
 .delayed-alert span { flex: 1; }
 
+/* ====== TRACKING TABLE PAGE ====== */
+.tracking-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--gray-200);
+}
+.tracking-toggle {
+  display: flex; background: var(--gray-100); border-radius: 6px; overflow: hidden;
+  font-size: 12px; font-weight: 600;
+}
+.tracking-toggle span {
+  padding: 6px 16px; cursor: pointer; color: var(--gray-400); transition: all 0.2s;
+}
+.tracking-toggle span.active {
+  background: var(--navy); color: #fff; border-radius: 6px;
+}
+.tracking-search {
+  padding: 7px 12px 7px 32px; border: 1px solid var(--gray-200); border-radius: 6px;
+  font-size: 12px; width: 200px; outline: none; background: #fff;
+  font-family: inherit; color: var(--gray-800);
+}
+.tracking-search:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,92,231,0.1); }
+.tracking-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; stroke: var(--gray-400); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.date-badge {
+  font-size: 11px; font-weight: 600; color: var(--gray-500);
+  padding: 6px 12px; background: var(--gray-50); border: 1px solid var(--gray-200);
+  border-radius: 6px; white-space: nowrap;
+}
+
+.tracking-filters {
+  display: flex; gap: 8px; padding: 10px 16px; background: #fff;
+  border-bottom: 1px solid var(--gray-200); flex-wrap: wrap;
+}
+
+.tracking-tabs {
+  display: flex; gap: 0; background: #fff; border-bottom: 2px solid var(--gray-200);
+  padding: 0 16px; overflow-x: auto;
+}
+.tracking-tab {
+  padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--gray-400);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+}
+.tracking-tab:hover { color: var(--gray-700); }
+.tracking-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+.tracking-tab-count {
+  font-size: 10px; font-weight: 700; background: var(--gray-100);
+  padding: 1px 6px; border-radius: 10px; color: var(--gray-500);
+}
+.tracking-tab.active .tracking-tab-count {
+  background: var(--navy); color: #fff;
+}
+
+.tracking-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.tracking-table thead { position: sticky; top: 0; z-index: 2; }
+.tracking-table th {
+  padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700;
+  color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px;
+  background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
+  white-space: nowrap;
+}
+.tracking-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-600); font-size: 12px; white-space: nowrap;
+}
+.tracking-table tbody tr:hover { background: var(--gray-50); }
+.tracking-table input[type="checkbox"] {
+  width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer;
+}
+
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1200px) {
   .metric-grid.cols-4, .metric-grid.cols-5, .metric-grid.cols-6 { grid-template-columns: repeat(3, 1fr); }
