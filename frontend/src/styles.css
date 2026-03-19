@@ -540,24 +540,64 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   border-radius: 6px; white-space: nowrap; display: flex; align-items: center;
 }
 .date-badge:hover { border-color: var(--accent); color: var(--gray-700); }
-.date-picker-dropdown {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
-  background: #fff; border: 1px solid var(--gray-200); border-radius: 8px;
-  padding: 12px; box-shadow: var(--shadow-md); min-width: 220px;
+/* Date Range Picker */
+.drp-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
 }
-.date-picker-row {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+.drp-container {
+  background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  padding: 28px 32px 20px; max-width: 680px; width: 90%;
 }
-.date-picker-row label {
-  font-size: 11px; font-weight: 600; color: var(--gray-500); width: 36px;
+.drp-calendars { display: flex; gap: 32px; }
+.drp-panel { flex: 1; }
+.drp-label { font-size: 13px; font-weight: 700; color: #4361ee; margin-bottom: 12px; }
+.drp-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.drp-selects { display: flex; gap: 8px; }
+.drp-selects select {
+  padding: 6px 10px; border: 1px solid var(--gray-200); border-radius: 6px;
+  font-size: 12px; font-weight: 600; font-family: inherit; color: var(--gray-800);
+  background: #fff; cursor: pointer; outline: none; appearance: auto;
 }
-.date-picker-row input[type="date"] {
-  flex: 1; padding: 6px 8px; border: 1px solid var(--gray-200); border-radius: 6px;
-  font-size: 12px; font-family: inherit; color: var(--gray-800); outline: none;
+.drp-arrows { display: flex; gap: 4px; }
+.drp-arrows span {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--gray-200); border-radius: 6px; cursor: pointer;
+  font-size: 16px; color: #4361ee; font-weight: 600; user-select: none;
 }
-.date-picker-row input[type="date"]:focus {
-  border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,92,231,0.1);
+.drp-arrows span:hover { background: var(--gray-50); }
+.drp-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
 }
+.drp-day-header {
+  font-size: 11px; font-weight: 700; color: var(--gray-800); padding: 6px 0;
+}
+.drp-day {
+  padding: 8px 0; font-size: 12px; font-weight: 500; color: var(--gray-700);
+  cursor: pointer; border-radius: 8px; transition: all 0.15s;
+}
+.drp-day:hover:not(.outside) { background: #eef1ff; }
+.drp-day.outside { color: var(--gray-300); cursor: default; }
+.drp-day.selected {
+  background: #4361ee; color: #fff; font-weight: 700; border-radius: 8px;
+}
+.drp-footer {
+  display: flex; justify-content: center; gap: 16px;
+  margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--gray-100);
+}
+.drp-btn-cancel {
+  padding: 10px 36px; border: 1px solid var(--gray-200); border-radius: 8px;
+  background: #fff; font-size: 13px; font-weight: 600; color: var(--gray-700);
+  cursor: pointer; font-family: inherit;
+}
+.drp-btn-cancel:hover { background: var(--gray-50); }
+.drp-btn-apply {
+  padding: 10px 36px; border: none; border-radius: 8px;
+  background: #4361ee; font-size: 13px; font-weight: 600; color: #fff;
+  cursor: pointer; font-family: inherit;
+}
+.drp-btn-apply:hover { background: #3651d4; }
 
 .tracking-filters {
   display: flex; gap: 8px; padding: 10px 16px; background: #fff;
