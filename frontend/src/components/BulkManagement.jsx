@@ -76,7 +76,7 @@ export default function BulkManagement({ onClose }) {
           </div>
 
           <div className="bulk-info">
-            <p>Data in the file should be in correct format. <a href="#" className="bulk-template-link">Download the .xlsx template here.</a></p>
+            <p>Data in the file should be in correct format. <a href="/bulk-shipment-template.xlsx" download className="bulk-template-link">Download the .xlsx template here.</a></p>
           </div>
         </div>
 
