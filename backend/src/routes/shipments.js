@@ -3,6 +3,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const Shipment = require('../models/Shipment');
 const { auth } = require('../middleware/auth');
+const { trackBatchAWBs, computeTrackingStatus } = require('../services/dhlTracking');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -188,6 +189,34 @@ router.post('/bulk-upload', auth, upload.single('file'), async (req, res) => {
     }
 
     res.json({ success: true, inserted, updated, errors, total: rows.length });
+
+    // Trigger DHL tracking in background for all uploaded AWBs
+    const dhlAwbs = shipments
+      .filter(s => !s.courier || s.courier.toLowerCase().includes('dhl'))
+      .map(s => s.awb);
+
+    if (dhlAwbs.length > 0) {
+      trackBatchAWBs(dhlAwbs).then(async (results) => {
+        for (const [awb, data] of Object.entries(results)) {
+          if (data.error || !data.events.length) continue;
+          const shipment = await Shipment.findOne({ awb });
+          if (!shipment) continue;
+
+          const trackingStatus = computeTrackingStatus(data.events, shipment.shipmentDate, data.estimatedDelivery);
+          await Shipment.updateOne({ awb }, {
+            $set: {
+              trackingEvents: data.events,
+              trackingStatus,
+              status: trackingStatus.currentMilestone,
+              edd: data.estimatedDelivery || shipment.edd,
+            },
+          });
+        }
+        console.log(`[DHL Tracking] Tracked ${Object.keys(results).length} AWBs after bulk upload`);
+      }).catch(err => {
+        console.error('[DHL Tracking] Background tracking error:', err.message);
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
