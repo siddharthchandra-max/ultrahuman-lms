@@ -48,19 +48,19 @@ export default function App() {
     '/upload': 'Upload Data',
   };
 
-  const isTracking = location.pathname === '/tracking';
+  // Close sidebar overlay on route change
+  useEffect(() => { setSidebarOverlay(false); }, [location.pathname]);
 
   return (
     <>
-      {!isTracking && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />}
-      {isTracking && sidebarOverlay && (
+      {sidebarOverlay && (
         <>
           <div className="sidebar-overlay-backdrop" onClick={() => setSidebarOverlay(false)} />
           <Sidebar collapsed={false} onToggle={() => setSidebarOverlay(false)} />
         </>
       )}
-      <div className={`main-wrapper${isTracking ? ' no-sidebar' : ''}`}>
-        <Header title={pageTitles[location.pathname] || 'Dashboard'} user={user} onLogout={handleLogout} showMenu={isTracking} onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} />
+      <div className="main-wrapper no-sidebar">
+        <Header title={pageTitles[location.pathname] || 'Dashboard'} user={user} onLogout={handleLogout} showMenu onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} />
         <div className="main">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
