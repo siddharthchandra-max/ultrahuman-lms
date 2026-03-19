@@ -19,6 +19,7 @@ export default function Tracking() {
   const [activeTab, setActiveTab] = useState('');
   const [loading, setLoading] = useState(true);
   const [statusCounts, setStatusCounts] = useState({});
+  const [viewMode, setViewMode] = useState('AWB');
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
@@ -105,13 +106,14 @@ export default function Tracking() {
       <div className="tracking-topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="tracking-toggle">
-            <span className="active">AWB</span>
-            <span>Invoice</span>
+            {['AWB', 'Invoice', 'UHR'].map(mode => (
+              <span key={mode} className={viewMode === mode ? 'active' : ''} onClick={() => setViewMode(mode)}>{mode}</span>
+            ))}
           </div>
           <div style={{ position: 'relative' }}>
             <input
               className="tracking-search"
-              placeholder="Search Awb No."
+              placeholder={`Search ${viewMode} No.`}
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && fetch(1)}
