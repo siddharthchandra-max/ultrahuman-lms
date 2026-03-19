@@ -27,10 +27,9 @@ export default function Login({ onLogin }) {
       <div className="login-hero">
         {/* Ultrahuman Logo */}
         <div className="login-hero-brand">
-          <svg className="uh-logo" viewBox="0 0 120 28" fill="none">
-            <path d="M14 0L0 14l14 14L28 14 14 0z" fill="#fff"/>
-            <path d="M14 6l-8 8 8 8 8-8-8-8z" fill="#000"/>
-            <text x="34" y="20" fill="#fff" fontSize="16" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="-0.5">ULTRAHUMAN</text>
+          <svg className="uh-logo" viewBox="0 0 200 32" fill="none">
+            <path d="M11.5 2L2 11.5h7v7L18.5 9h-7V2z" fill="#fff" transform="scale(1.4)"/>
+            <text x="38" y="23" fill="#fff" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="1.5">ULTRAHUMAN</text>
           </svg>
         </div>
 
@@ -81,10 +80,9 @@ export default function Login({ onLogin }) {
       <div className="login-form-side">
         <div className="login-form-container">
           <div className="login-form-logo">
-            <svg viewBox="0 0 120 28" fill="none" style={{ height: 22 }}>
-              <path d="M14 0L0 14l14 14L28 14 14 0z" fill="#000"/>
-              <path d="M14 6l-8 8 8 8 8-8-8-8z" fill="#fff"/>
-              <text x="34" y="20" fill="#000" fontSize="16" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="-0.5">ULTRAHUMAN</text>
+            <svg viewBox="0 0 200 32" fill="none" style={{ height: 26 }}>
+              <path d="M11.5 2L2 11.5h7v7L18.5 9h-7V2z" fill="#000" transform="scale(1.4)"/>
+              <text x="38" y="23" fill="#000" fontSize="18" fontWeight="800" fontFamily="Inter, sans-serif" letterSpacing="1.5">ULTRAHUMAN</text>
             </svg>
           </div>
 

@@ -45,10 +45,8 @@ export default function Sidebar({ collapsed, onToggle }) {
     <div className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sidebar-brand">
         <div className="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
+          <svg viewBox="0 0 20 20" fill="none">
+            <path d="M10 1L1.5 9.5h6v6L16 7h-6V1z" fill="#fff"/>
           </svg>
         </div>
         {!collapsed && (
