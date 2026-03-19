@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api, { formatINR, formatDate } from '../utils/api';
 
 export default function Shipments() {
+  const navigate = useNavigate();
   const [shipments, setShipments] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [filterOpts, setFilterOpts] = useState({ products: [], countries: [], months: [], statuses: [] });
@@ -74,7 +76,7 @@ export default function Shipments() {
             <thead>
               <tr>
                 <th>AWB No.</th><th>Courier</th><th>Date</th><th>Week</th><th>Destination</th>
-                <th>Weight</th><th>Amount</th><th>Product</th><th>Month</th><th>Type</th><th>Status</th>
+                <th>Weight</th><th>Amount</th><th>Product</th><th>Month</th><th>Type</th><th>Status</th><th>Track</th>
               </tr>
             </thead>
             <tbody>
@@ -95,6 +97,7 @@ export default function Shipments() {
                   <td>{s.month}</td>
                   <td>{productBadge(s.productName)}</td>
                   <td>{statusBadge(s.status)}</td>
+                  <td><button className="btn btn-sm btn-primary" style={{ padding: '3px 10px', fontSize: 11 }} onClick={() => navigate(`/tracking?awb=${s.awb}`)}>Track</button></td>
                 </tr>
               ))}
             </tbody>

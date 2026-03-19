@@ -18,10 +18,13 @@ app.use('/api/shipments', require('./routes/shipments'));
 app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/tracking', require('./routes/tracking'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 const PORT = process.env.PORT || 5000;
 connectDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  // Start tracking cron job
+  require('./jobs/trackingRefresh').start();
 });

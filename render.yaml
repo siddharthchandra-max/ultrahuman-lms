@@ -14,6 +14,10 @@ services:
         value: production
       - key: FRONTEND_URL
         value: https://uh-lms-frontend.onrender.com
+      - key: DHL_API_KEY
+        sync: false
+      - key: DHL_API_URL
+        value: https://api-eu.dhl.com/track/shipments
 
   - type: web
     name: uh-lms-frontend

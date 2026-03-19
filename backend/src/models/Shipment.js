@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+const trackingEventSchema = new mongoose.Schema({
+  timestamp: Date,
+  location: String,
+  locationCode: String,
+  statusCode: String,
+  description: String,
+  milestone: {
+    type: String,
+    enum: ['Booked', 'Picked Up', 'In Transit', 'Customs', 'Out for Delivery', 'Delivered', 'Failed', 'Returned'],
+  },
+}, { _id: false });
+
 const shipmentSchema = new mongoose.Schema({
   awb: { type: String, index: true, trim: true },
   invoiceNumber: { type: String, trim: true },
@@ -40,12 +52,30 @@ const shipmentSchema = new mongoose.Schema({
   shipmentType: { type: String, default: 'Unknown' },
   logisticsType: { type: String, default: 'Export' },
   billingAccount: String,
-  status: { type: String, enum: ['Booked', 'In Transit', 'Delivered', 'Failed', 'Returned', 'Unknown'], default: 'Unknown', index: true },
+  status: {
+    type: String,
+    enum: ['Booked', 'Picked Up', 'In Transit', 'Customs', 'Out for Delivery', 'Delivered', 'Failed', 'Returned', 'Unknown'],
+    default: 'Unknown', index: true,
+  },
   courier: { type: String, default: 'DHL' },
   sourceFile: String,
+
+  // Tracking
+  trackingEvents: [trackingEventSchema],
+  trackingStatus: {
+    currentMilestone: String,
+    lastEvent: String,
+    lastEventTime: Date,
+    lastTrackedAt: Date,
+    isDelivered: { type: Boolean, default: false },
+    isDelayed: { type: Boolean, default: false },
+    estimatedDelivery: Date,
+    daysInTransit: { type: Number, default: 0 },
+  },
 }, { timestamps: true });
 
 shipmentSchema.index({ awb: 1, month: 1 });
 shipmentSchema.index({ shipmentDate: -1 });
+shipmentSchema.index({ 'trackingStatus.isDelivered': 1, 'trackingStatus.lastTrackedAt': 1 });
 
 module.exports = mongoose.model('Shipment', shipmentSchema);

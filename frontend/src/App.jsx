@@ -6,6 +6,7 @@ import Shipments from './pages/Shipments';
 import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
 import Upload from './pages/Upload';
+import Tracking from './pages/Tracking';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
@@ -40,6 +41,7 @@ export default function App() {
   const pageTitles = {
     '/dashboard': 'Dashboard',
     '/shipments': 'Shipments',
+    '/tracking': 'Shipment Tracking',
     '/invoices': 'Invoices',
     '/reports': 'Reports & Analytics',
     '/upload': 'Upload Data',
@@ -54,6 +56,7 @@ export default function App() {
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/shipments" element={<Shipments />} />
+            <Route path="/tracking" element={<Tracking />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/upload" element={<Upload />} />

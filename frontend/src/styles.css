@@ -361,6 +361,81 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; stroke: var(--gray-300); fill: none; }
 .empty-state p { font-size: 14px; font-weight: 500; }
 
+/* ====== TRACKING ====== */
+
+/* Milestone progress bar */
+.tracking-progress {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0; margin-bottom: 24px; border-bottom: 1px solid var(--gray-100);
+  position: relative;
+}
+.tracking-step {
+  display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1;
+  flex: 1;
+}
+.tracking-step .step-icon {
+  width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--gray-100); border: 2px solid var(--gray-200); transition: all 0.3s; margin-bottom: 8px;
+}
+.tracking-step .step-icon svg {
+  width: 18px; height: 18px; stroke: var(--gray-400); fill: none; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.tracking-step .step-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-align: center; }
+.tracking-step .step-line {
+  position: absolute; top: 20px; left: 50%; width: 100%; height: 2px;
+  background: var(--gray-200); z-index: -1;
+}
+
+.tracking-step.completed .step-icon { background: var(--green); border-color: var(--green); }
+.tracking-step.completed .step-icon svg { stroke: #fff; }
+.tracking-step.completed .step-label { color: var(--green); }
+.tracking-step.completed .step-line { background: var(--green); }
+
+.tracking-step.current .step-icon {
+  background: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(108,92,231,0.15);
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+.tracking-step.current .step-icon svg { stroke: #fff; }
+.tracking-step.current .step-label { color: var(--accent); font-weight: 700; }
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(108,92,231,0.15); }
+  50% { box-shadow: 0 0 0 8px rgba(108,92,231,0.08); }
+}
+
+/* Timeline */
+.tracking-timeline { padding: 8px 0 8px 20px; border-left: 2px solid var(--gray-200); margin-left: 12px; }
+.timeline-node { position: relative; padding: 0 0 24px 24px; }
+.timeline-node:last-child { padding-bottom: 0; }
+.timeline-dot {
+  position: absolute; left: -27px; top: 4px; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--gray-300); border: 2px solid #fff;
+}
+.timeline-node.current .timeline-dot { background: var(--accent); width: 12px; height: 12px; left: -28px; top: 3px; box-shadow: 0 0 0 3px rgba(108,92,231,0.2); }
+.timeline-time { font-size: 11px; color: var(--gray-400); font-weight: 600; margin-bottom: 4px; }
+.timeline-desc { font-size: 13px; color: var(--gray-800); font-weight: 500; }
+.timeline-location { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+/* Detail grid */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-item { padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); }
+.detail-label { font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.detail-value { font-size: 14px; color: var(--gray-800); font-weight: 600; }
+
+/* Delayed alert banner */
+.delayed-alert {
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+  background: rgba(225,112,85,0.08); border: 1px solid rgba(225,112,85,0.2);
+  border-radius: var(--radius); margin-bottom: 20px; font-size: 13px; color: var(--red);
+}
+.delayed-alert svg {
+  width: 20px; height: 20px; stroke: var(--red); fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+}
+.delayed-alert span { flex: 1; }
+
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1200px) {
   .metric-grid.cols-4, .metric-grid.cols-5, .metric-grid.cols-6 { grid-template-columns: repeat(3, 1fr); }

@@ -8,6 +8,7 @@
     "import": "node scripts/importData.js"
   },
   "dependencies": {
+    "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -15,6 +16,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "multer": "^1.4.5-lts.1",
+    "node-cron": "^4.2.1",
     "xlsx": "^0.18.5"
   }
 }
