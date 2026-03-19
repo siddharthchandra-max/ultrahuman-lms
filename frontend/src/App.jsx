@@ -18,6 +18,7 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarOverlay, setSidebarOverlay] = useState(false);
 
   const handleLogin = (t, u) => {
     setToken(t);
@@ -52,8 +53,14 @@ export default function App() {
   return (
     <>
       {!isTracking && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />}
+      {isTracking && sidebarOverlay && (
+        <>
+          <div className="sidebar-overlay-backdrop" onClick={() => setSidebarOverlay(false)} />
+          <Sidebar collapsed={false} onToggle={() => setSidebarOverlay(false)} />
+        </>
+      )}
       <div className={`main-wrapper${isTracking ? ' no-sidebar' : ''}`}>
-        <Header title={pageTitles[location.pathname] || 'Dashboard'} user={user} onLogout={handleLogout} />
+        <Header title={pageTitles[location.pathname] || 'Dashboard'} user={user} onLogout={handleLogout} showMenu={isTracking} onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} />
         <div className="main">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />

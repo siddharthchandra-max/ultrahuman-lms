@@ -1,9 +1,14 @@
 import React from 'react';
 
-export default function Header({ title, user, onLogout }) {
+export default function Header({ title, user, onLogout, onMenuClick, showMenu }) {
   return (
     <div className="header">
       <div className="header-left">
+        {showMenu && (
+          <div className="header-menu-btn" onClick={onMenuClick} title="Open sidebar">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </div>
+        )}
         <h1>{title}</h1>
       </div>
       <div className="header-right">
