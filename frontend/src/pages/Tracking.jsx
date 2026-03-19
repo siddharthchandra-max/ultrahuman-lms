@@ -178,6 +178,11 @@ export default function Tracking() {
           <option>COD Order</option>
           <option>Prepaid Order</option>
         </select>
+        <select className="filter-select" value={filters.movementType || ''} onChange={e => setFilters(f => ({ ...f, movementType: e.target.value || undefined }))}>
+          <option value="">Movement Order Type</option>
+          <option>Forward</option>
+          <option>Reverse</option>
+        </select>
       </div>
 
       {/* Status Tabs */}
