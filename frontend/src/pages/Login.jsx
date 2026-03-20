@@ -27,6 +27,35 @@ export default function Login({ onLogin }) {
       <div className="login-hero">
         <div className="login-hero-brand" />
 
+        {/* Animated background elements */}
+        <div className="hero-particles">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="particle" style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 8}s`,
+              animationDuration: `${6 + Math.random() * 8}s`,
+              width: `${2 + Math.random() * 4}px`,
+              height: `${2 + Math.random() * 4}px`,
+              opacity: 0.15 + Math.random() * 0.35,
+            }} />
+          ))}
+        </div>
+
+        {/* Animated route lines */}
+        <svg className="hero-routes" viewBox="0 0 500 500" preserveAspectRatio="none">
+          <path className="route-path r1" d="M50,400 Q150,200 250,250 T450,100" />
+          <path className="route-path r2" d="M0,300 Q200,100 300,200 T500,50" />
+          <path className="route-path r3" d="M100,450 Q250,300 350,350 T500,200" />
+          <circle className="route-dot d1" r="4"><animateMotion dur="4s" repeatCount="indefinite" path="M50,400 Q150,200 250,250 T450,100" /></circle>
+          <circle className="route-dot d2" r="3"><animateMotion dur="5s" repeatCount="indefinite" path="M0,300 Q200,100 300,200 T500,50" /></circle>
+          <circle className="route-dot d3" r="3.5"><animateMotion dur="6s" repeatCount="indefinite" path="M100,450 Q250,300 350,350 T500,200" /></circle>
+        </svg>
+
+        {/* Orbiting rings */}
+        <div className="hero-orbit orbit-1"><div className="orbit-dot" /></div>
+        <div className="hero-orbit orbit-2"><div className="orbit-dot" /></div>
+
         {/* Central visual */}
         <div className="login-hero-center">
           <div className="hero-ring-glow" />
