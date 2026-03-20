@@ -27,6 +27,74 @@ export default function Login({ onLogin }) {
       <div className="login-hero">
         <div className="login-hero-brand" />
 
+        {/* Gradient mesh blobs */}
+        <div className="hero-blob blob-1" />
+        <div className="hero-blob blob-2" />
+        <div className="hero-blob blob-3" />
+
+        {/* Hex grid background */}
+        <svg className="hero-hex-grid" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+          {Array.from({length: 8}).map((_, row) =>
+            Array.from({length: 6}).map((_, col) => {
+              const x = col * 70 + (row % 2 ? 35 : 0);
+              const y = row * 60;
+              return <polygon key={`${row}-${col}`} points={`${x},${y-20} ${x+17},${y-10} ${x+17},${y+10} ${x},${y+20} ${x-17},${y+10} ${x-17},${y-10}`} className="hex-cell" style={{animationDelay: `${(row+col)*0.3}s`}} />;
+            })
+          )}
+        </svg>
+
+        {/* 3D Globe wireframe */}
+        <div className="hero-globe-wrap">
+          <svg className="hero-globe" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="80" className="globe-outline" />
+            {/* Latitude lines */}
+            <ellipse cx="100" cy="100" rx="80" ry="20" className="globe-line" />
+            <ellipse cx="100" cy="100" rx="80" ry="45" className="globe-line" />
+            <ellipse cx="100" cy="100" rx="80" ry="65" className="globe-line" />
+            {/* Longitude lines */}
+            <ellipse cx="100" cy="100" rx="20" ry="80" className="globe-line" />
+            <ellipse cx="100" cy="100" rx="45" ry="80" className="globe-line" />
+            <ellipse cx="100" cy="100" rx="65" ry="80" className="globe-line" />
+            {/* Location pins on globe */}
+            <circle cx="65" cy="75" r="3" className="globe-pin gp-1" />
+            <circle cx="130" cy="85" r="3" className="globe-pin gp-2" />
+            <circle cx="110" cy="60" r="3" className="globe-pin gp-3" />
+            <circle cx="85" cy="120" r="3" className="globe-pin gp-4" />
+            {/* Arc connections */}
+            <path d="M65,75 Q100,40 130,85" className="globe-arc ga-1" />
+            <path d="M130,85 Q145,100 110,60" className="globe-arc ga-2" />
+            <path d="M85,120 Q60,90 65,75" className="globe-arc ga-3" />
+          </svg>
+        </div>
+
+        {/* Animated pipeline / supply chain steps */}
+        <div className="hero-pipeline">
+          <div className="pipe-step ps-1">
+            <div className="pipe-icon"><svg viewBox="0 0 24 24"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div>
+            <span>Order</span>
+          </div>
+          <div className="pipe-line"><div className="pipe-flow" /></div>
+          <div className="pipe-step ps-2">
+            <div className="pipe-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+            <span>Ship</span>
+          </div>
+          <div className="pipe-line"><div className="pipe-flow pf-2" /></div>
+          <div className="pipe-step ps-3">
+            <div className="pipe-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <span>Track</span>
+          </div>
+          <div className="pipe-line"><div className="pipe-flow pf-3" /></div>
+          <div className="pipe-step ps-4">
+            <div className="pipe-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <span>Deliver</span>
+          </div>
+          <div className="pipe-line"><div className="pipe-flow pf-4" /></div>
+          <div className="pipe-step ps-5">
+            <div className="pipe-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+            <span>Reconcile</span>
+          </div>
+        </div>
+
         {/* Animated background elements */}
         <div className="hero-particles">
           {[...Array(20)].map((_, i) => (

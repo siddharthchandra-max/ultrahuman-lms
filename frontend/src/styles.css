@@ -341,6 +341,129 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
 }
 
+/* Gradient mesh blobs */
+.hero-blob {
+  position: absolute; border-radius: 50%; filter: blur(80px); z-index: 0;
+  animation: blob-drift 12s ease-in-out infinite;
+}
+.blob-1 {
+  width: 300px; height: 300px; top: -10%; left: -5%;
+  background: radial-gradient(circle, rgba(0,127,245,0.15), transparent 70%);
+}
+.blob-2 {
+  width: 250px; height: 250px; bottom: 10%; right: -5%;
+  background: radial-gradient(circle, rgba(14,252,109,0.1), transparent 70%);
+  animation-delay: -4s; animation-duration: 15s;
+}
+.blob-3 {
+  width: 200px; height: 200px; top: 40%; left: 30%;
+  background: radial-gradient(circle, rgba(108,92,231,0.1), transparent 70%);
+  animation-delay: -8s; animation-duration: 18s;
+}
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* Hex grid */
+.hero-hex-grid {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4;
+}
+.hex-cell {
+  fill: none; stroke: rgba(0,127,245,0.04); stroke-width: 0.5;
+  animation: hex-flicker 6s ease-in-out infinite;
+}
+@keyframes hex-flicker {
+  0%, 100% { stroke: rgba(0,127,245,0.04); }
+  50% { stroke: rgba(0,127,245,0.1); }
+}
+
+/* 3D Globe wireframe */
+.hero-globe-wrap {
+  position: absolute; top: 8%; right: 5%; z-index: 0; opacity: 0.35;
+  animation: globe-rotate-y 25s linear infinite;
+}
+.hero-globe { width: 160px; height: 160px; }
+.globe-outline {
+  fill: none; stroke: rgba(0,127,245,0.15); stroke-width: 0.8;
+}
+.globe-line {
+  fill: none; stroke: rgba(0,127,245,0.08); stroke-width: 0.5;
+}
+.globe-pin {
+  fill: #007ff5; animation: node-pulse 2s ease-in-out infinite;
+}
+.gp-2 { fill: #0efc6d; animation-delay: 0.5s; }
+.gp-3 { fill: #fdcb6e; animation-delay: 1s; }
+.gp-4 { fill: #007ff5; animation-delay: 1.5s; }
+.globe-arc {
+  fill: none; stroke-width: 1; stroke-dasharray: 3 4;
+  animation: dash-move 2s linear infinite;
+}
+.ga-1 { stroke: #007ff5; opacity: 0.4; }
+.ga-2 { stroke: #0efc6d; opacity: 0.3; animation-duration: 3s; }
+.ga-3 { stroke: #fdcb6e; opacity: 0.3; animation-duration: 2.5s; }
+@keyframes globe-rotate-y {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+/* Supply chain pipeline */
+.hero-pipeline {
+  position: absolute; bottom: 5%; left: 5%; right: 5%; z-index: 1;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  opacity: 0.6;
+}
+.pipe-step {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  animation: pipe-pop 0.5s ease-out both;
+}
+.ps-1 { animation-delay: 0.3s; }
+.ps-2 { animation-delay: 0.6s; }
+.ps-3 { animation-delay: 0.9s; }
+.ps-4 { animation-delay: 1.2s; }
+.ps-5 { animation-delay: 1.5s; }
+@keyframes pipe-pop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pipe-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(0,127,245,0.08); border: 1px solid rgba(0,127,245,0.2);
+  display: flex; align-items: center; justify-content: center;
+}
+.pipe-icon svg {
+  width: 14px; height: 14px; fill: none; stroke: #007ff5; stroke-width: 1.5;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.ps-3 .pipe-icon { border-color: rgba(14,252,109,0.2); background: rgba(14,252,109,0.08); }
+.ps-3 .pipe-icon svg { stroke: #0efc6d; }
+.ps-4 .pipe-icon { border-color: rgba(14,252,109,0.2); background: rgba(14,252,109,0.08); }
+.ps-4 .pipe-icon svg { stroke: #0efc6d; }
+.ps-5 .pipe-icon { border-color: rgba(253,203,110,0.2); background: rgba(253,203,110,0.08); }
+.ps-5 .pipe-icon svg { stroke: #fdcb6e; }
+.pipe-step span {
+  font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.35);
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.pipe-line {
+  width: 40px; height: 2px; background: rgba(255,255,255,0.05);
+  position: relative; overflow: hidden; border-radius: 1px;
+}
+.pipe-flow {
+  position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, #007ff5, transparent);
+  animation: pipe-flow-move 2s ease-in-out infinite;
+}
+.pf-2 { animation-delay: 0.4s; }
+.pf-3 { background: linear-gradient(90deg, transparent, #0efc6d, transparent); animation-delay: 0.8s; }
+.pf-4 { background: linear-gradient(90deg, transparent, #fdcb6e, transparent); animation-delay: 1.2s; }
+@keyframes pipe-flow-move {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
 /* Floating particles */
 .hero-particles {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; overflow: hidden;
