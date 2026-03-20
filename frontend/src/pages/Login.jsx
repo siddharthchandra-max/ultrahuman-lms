@@ -173,6 +173,55 @@ export default function Login({ onLogin }) {
             </div>
           </div>
 
+          {/* Live tracking feed */}
+          <div className="hero-live-feed">
+            <div className="live-feed-item lfi-1">
+              <div className="lfi-dot delivered" />
+              <div className="lfi-text">
+                <span className="lfi-awb">AWB 2847391056</span>
+                <span className="lfi-status">Delivered to Mumbai</span>
+              </div>
+              <span className="lfi-time">2m ago</span>
+            </div>
+            <div className="live-feed-item lfi-2">
+              <div className="lfi-dot transit" />
+              <div className="lfi-text">
+                <span className="lfi-awb">AWB 9173625480</span>
+                <span className="lfi-status">In Transit — Frankfurt Hub</span>
+              </div>
+              <span className="lfi-time">5m ago</span>
+            </div>
+            <div className="live-feed-item lfi-3">
+              <div className="lfi-dot customs" />
+              <div className="lfi-text">
+                <span className="lfi-awb">AWB 6042817395</span>
+                <span className="lfi-status">Customs Clearance — Singapore</span>
+              </div>
+              <span className="lfi-time">8m ago</span>
+            </div>
+          </div>
+
+          {/* Finance reconciliation ticker */}
+          <div className="hero-finance-ticker">
+            <div className="ticker-track">
+              <div className="ticker-item"><span className="tk-label">Invoices Matched</span><span className="tk-value tk-green">4,291</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Pending Reco</span><span className="tk-value tk-yellow">156</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Overcharged</span><span className="tk-value tk-red">23</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Savings Found</span><span className="tk-value tk-green">$12.4K</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Invoices Matched</span><span className="tk-value tk-green">4,291</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Pending Reco</span><span className="tk-value tk-yellow">156</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Overcharged</span><span className="tk-value tk-red">23</span></div>
+              <div className="ticker-sep" />
+              <div className="ticker-item"><span className="tk-label">Savings Found</span><span className="tk-value tk-green">$12.4K</span></div>
+            </div>
+          </div>
+
           <div className="hero-tagline">
             <span className="hero-tag">Logistics Management System</span>
             <h2>Track. Reconcile.<br/><span>Optimize.</span></h2>
