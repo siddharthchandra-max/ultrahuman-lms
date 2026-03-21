@@ -2,7 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 const Shipment = require('../models/Shipment');
-const { trackSingleAWB, trackBatchAWBs, computeTrackingStatus, mapEventCodeToMilestone } = require('../services/dhlTracking');
+const { trackSingleAWB: dhlTrackSingle, trackBatchAWBs: dhlTrackBatch, computeTrackingStatus, mapEventCodeToMilestone } = require('../services/dhlTracking');
+const { trackSingleAWB: upsTrackSingle, trackBatchAWBs: upsTrackBatch } = require('../services/upsTracking');
+
+// Pick the right tracker based on courier
+function getTracker(courier) {
+  if (!courier) return { single: dhlTrackSingle, batch: dhlTrackBatch, name: 'DHL' };
+  const c = courier.toLowerCase();
+  if (c.includes('ups')) return { single: upsTrackSingle, batch: upsTrackBatch, name: 'UPS' };
+  return { single: dhlTrackSingle, batch: dhlTrackBatch, name: 'DHL' };
+}
 
 // Track single AWB
 router.get('/:awb', auth, async (req, res) => {
@@ -11,8 +20,8 @@ router.get('/:awb', auth, async (req, res) => {
     const shipment = await Shipment.findOne({ awb }).sort({ shipmentDate: -1 });
 
     if (!shipment) {
-      // AWB not in our system — still try DHL API
-      const result = await trackSingleAWB(awb);
+      // AWB not in our system — try DHL by default
+      const result = await dhlTrackSingle(awb);
       return res.json({
         awb,
         found: false,
@@ -26,7 +35,8 @@ router.get('/:awb', auth, async (req, res) => {
     const needsRefresh = !lastTracked || (Date.now() - lastTracked.getTime()) > 15 * 60 * 1000;
 
     if (needsRefresh) {
-      const result = await trackSingleAWB(awb);
+      const tracker = getTracker(shipment.courier);
+      const result = await tracker.single(awb);
 
       if (result.events.length > 0) {
         // Merge events (deduplicate by timestamp + statusCode)
@@ -40,9 +50,15 @@ router.get('/:awb', auth, async (req, res) => {
           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         // Update tracking status
-        const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, result.estimatedDelivery);
+        const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, result.estimatedDelivery, shipment.dispatchDate);
         shipment.trackingStatus = ts;
         shipment.status = ts.currentMilestone;
+
+        // Set dispatch date from first Picked Up (PU) event
+        if (!shipment.dispatchDate) {
+          const pickupEvent = shipment.trackingEvents.filter(e => e.statusCode === 'PU' || e.statusCode === 'DP').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+          if (pickupEvent) shipment.dispatchDate = new Date(pickupEvent.timestamp);
+        }
       } else {
         // Update lastTrackedAt even if no events
         if (!shipment.trackingStatus) shipment.trackingStatus = {};
@@ -115,7 +131,7 @@ router.post('/batch', auth, async (req, res) => {
       shipment.trackingEvents = [...(shipment.trackingEvents || []), ...newEvents]
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-      const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery);
+      const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
       shipment.trackingStatus = ts;
       shipment.status = ts.currentMilestone;
       await shipment.save();
@@ -160,7 +176,7 @@ router.post('/refresh-active', auth, async (req, res) => {
       shipment.trackingEvents = [...(shipment.trackingEvents || []), ...newEvents]
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-      const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery);
+      const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
       shipment.trackingStatus = ts;
       shipment.status = ts.currentMilestone;
       await shipment.save();
@@ -233,10 +249,52 @@ router.get('/summary/stats', auth, async (req, res) => {
   }
 });
 
-// Debug: test DHL tracking for a single AWB (no auth for quick testing)
+// Debug: test DHL raw API call
 router.get('/debug/test/:awb', async (req, res) => {
   try {
-    const result = await trackSingleAWB(req.params.awb);
+    const axios = require('axios');
+    const DHL_API_URL = process.env.DHL_API_URL || 'https://xmlpi-ea.dhl.com/XMLShippingServlet';
+    const DHL_SITE_ID = process.env.DHL_SITE_ID;
+    const DHL_PASSWORD = process.env.DHL_PASSWORD;
+    const awb = req.params.awb;
+    const now = new Date().toISOString();
+    const msgRef = ('UH_LMS_TRACK_' + Date.now()).substring(0, 28).padEnd(28, '0');
+
+    const xmlBody = `<?xml version="1.0" encoding="UTF-8"?>
+<req:KnownTrackingRequest xmlns:req="http://www.dhl.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.dhl.com TrackingRequestKnown-1.0.xsd" schemaVersion="1.0">
+  <Request>
+    <ServiceHeader>
+      <MessageTime>${now}</MessageTime>
+      <MessageReference>${msgRef}</MessageReference>
+      <SiteID>${DHL_SITE_ID}</SiteID>
+      <Password>${DHL_PASSWORD.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}</Password>
+    </ServiceHeader>
+  </Request>
+  <LanguageCode>en</LanguageCode>
+  <AWBNumber>
+    <ArrayOfAWBNumberItem>${awb}</ArrayOfAWBNumberItem>
+  </AWBNumber>
+  <LevelOfDetails>ALL_CHECKPOINTS</LevelOfDetails>
+  <PiecesEnabled>S</PiecesEnabled>
+</req:KnownTrackingRequest>`;
+
+    const response = await axios.post(DHL_API_URL, xmlBody, {
+      headers: { 'Content-Type': 'application/xml' },
+      timeout: 20000,
+      responseType: 'text',
+    });
+
+    res.set('Content-Type', 'text/xml');
+    res.send(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message, response: err.response?.data?.substring?.(0, 1000) });
+  }
+});
+
+// Debug: test UPS tracking
+router.get('/debug/ups/:awb', async (req, res) => {
+  try {
+    const result = await upsTrackSingle(req.params.awb);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

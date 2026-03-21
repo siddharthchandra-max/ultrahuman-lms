@@ -3,7 +3,8 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const Shipment = require('../models/Shipment');
 const { auth } = require('../middleware/auth');
-const { trackBatchAWBs, computeTrackingStatus } = require('../services/dhlTracking');
+const { trackBatchAWBs: dhlTrackBatch, computeTrackingStatus } = require('../services/dhlTracking');
+const { trackBatchAWBs: upsTrackBatch } = require('../services/upsTracking');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -190,40 +191,57 @@ router.post('/bulk-upload', auth, upload.single('file'), async (req, res) => {
 
     res.json({ success: true, inserted, updated, errors, total: rows.length });
 
-    // Trigger DHL tracking in background for all uploaded AWBs
-    const dhlAwbs = shipments
-      .filter(s => !s.courier || s.courier.toLowerCase().includes('dhl'))
-      .map(s => s.awb);
+    // Background tracking — group AWBs by courier
+    const dhlAwbs = shipments.filter(s => s.courier && s.courier.toLowerCase().includes('dhl')).map(s => s.awb);
+    const upsAwbs = shipments.filter(s => s.courier && s.courier.toLowerCase().includes('ups')).map(s => s.awb);
 
-    if (dhlAwbs.length > 0) {
-      trackBatchAWBs(dhlAwbs).then(async (results) => {
-        for (const [awb, data] of Object.entries(results)) {
-          if (data.error || !data.events.length) continue;
-          const shipment = await Shipment.findOne({ awb });
-          if (!shipment) continue;
+    // Helper to update shipments from tracking results
+    const updateFromTracking = async (results, courierName) => {
+      for (const [awb, data] of Object.entries(results)) {
+        if (data.error || !data.events.length) continue;
+        const shipment = await Shipment.findOne({ awb });
+        if (!shipment) continue;
 
-          const trackingStatus = computeTrackingStatus(data.events, shipment.shipmentDate, data.estimatedDelivery);
-          const updateFields = {
-            trackingEvents: data.events,
-            trackingStatus,
-            status: trackingStatus.currentMilestone,
-          };
+        const trackingStatus = computeTrackingStatus(data.events, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
+        const updateFields = {
+          trackingEvents: data.events,
+          trackingStatus,
+          status: trackingStatus.currentMilestone,
+        };
 
-          // Enrich shipment with DHL data if missing
-          if (data.origin && !shipment.sourceCity) updateFields.sourceCity = data.origin.description;
-          if (data.destination && !shipment.destCity) updateFields.destCity = data.destination.description;
-          if (data.destCountry && !shipment.destCode) updateFields.destCode = data.destCountry;
-          if (data.originCountry && !shipment.sourceCountry) updateFields.sourceCountry = data.originCountry;
-          if (data.weight && !shipment.weight) updateFields.weight = data.weight;
-          if (data.pieces && !shipment.pieces) updateFields.pieces = data.pieces;
-          if (data.shipperRef && !shipment.shipmentNumber) updateFields.shipmentNumber = data.shipperRef;
-          if (data.description && !shipment.productName) updateFields.productName = data.description;
+        // Enrich shipment with tracking data if missing
+        if (data.origin && !shipment.sourceCity) updateFields.sourceCity = data.origin.description;
+        if (data.destination && !shipment.destCity) updateFields.destCity = data.destination.description;
+        if (data.destCountry && !shipment.destCode) updateFields.destCode = data.destCountry;
+        if (data.originCountry && !shipment.sourceCountry) updateFields.sourceCountry = data.originCountry;
+        if (data.weight && !shipment.weight) updateFields.weight = data.weight;
+        if (data.pieces && !shipment.pieces) updateFields.pieces = data.pieces;
+        if (data.shipperRef && !shipment.shipmentNumber) updateFields.shipmentNumber = data.shipperRef;
+        if (data.description && !shipment.productName) updateFields.productName = data.description;
+        if (data.estimatedDelivery) updateFields.edd = data.estimatedDelivery;
 
-          await Shipment.updateOne({ awb }, { $set: updateFields });
+        // Set dispatch date from first Picked Up (PU/DP) event
+        const pickupEvent = data.events.filter(e => e.statusCode === 'PU' || e.statusCode === 'DP').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+        if (pickupEvent && pickupEvent.timestamp) {
+          updateFields.dispatchDate = new Date(pickupEvent.timestamp);
         }
-        console.log(`[DHL Tracking] Tracked ${Object.keys(results).length} AWBs after bulk upload`);
-      }).catch(err => {
-        console.error('[DHL Tracking] Background tracking error:', err.message);
+
+        await Shipment.updateOne({ awb }, { $set: updateFields });
+      }
+      console.log(`[${courierName}] Tracked ${Object.keys(results).length} AWBs after bulk upload`);
+    };
+
+    // Trigger DHL tracking
+    if (dhlAwbs.length > 0) {
+      dhlTrackBatch(dhlAwbs).then(r => updateFromTracking(r, 'DHL')).catch(err => {
+        console.error('[DHL] Background tracking error:', err.message);
+      });
+    }
+
+    // Trigger UPS tracking
+    if (upsAwbs.length > 0) {
+      upsTrackBatch(upsAwbs).then(r => updateFromTracking(r, 'UPS')).catch(err => {
+        console.error('[UPS] Background tracking error:', err.message);
       });
     }
   } catch (err) {

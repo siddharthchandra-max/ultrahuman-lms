@@ -47,7 +47,7 @@ function start() {
         shipment.trackingEvents = [...(shipment.trackingEvents || []), ...newEvents]
           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery);
+        const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
         shipment.trackingStatus = ts;
         shipment.status = ts.currentMilestone;
         await shipment.save();

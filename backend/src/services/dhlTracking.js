@@ -53,6 +53,11 @@ function getAllBlocks(xml, tag) {
   return blocks;
 }
 
+// XML-escape special characters
+function xmlEscape(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
 // Build DHL XML tracking request
 function buildTrackingXML(awbs) {
   const awbArray = Array.isArray(awbs) ? awbs : [awbs];
@@ -67,8 +72,8 @@ function buildTrackingXML(awbs) {
     <ServiceHeader>
       <MessageTime>${now}</MessageTime>
       <MessageReference>${msgRef}</MessageReference>
-      <SiteID>${DHL_SITE_ID}</SiteID>
-      <Password>${DHL_PASSWORD}</Password>
+      <SiteID>${xmlEscape(DHL_SITE_ID)}</SiteID>
+      <Password>${xmlEscape(DHL_PASSWORD)}</Password>
     </ServiceHeader>
   </Request>
   <LanguageCode>en</LanguageCode>
@@ -199,11 +204,17 @@ async function trackSingleAWB(awb) {
       responseType: 'text',
     });
 
+    // Log raw response for debugging
+    console.log(`[DHL] Raw response length: ${response.data.length}`);
+    console.log(`[DHL] Response preview: ${response.data.substring(0, 500)}`);
+
     const parsed = parseXMLResponse(response.data);
     const result = parsed[String(awb)];
 
+    console.log(`[DHL] Parsed keys: ${Object.keys(parsed).join(', ') || 'none'}`);
+
     if (!result) {
-      return { awb, events: [], error: 'No tracking data found' };
+      return { awb, events: [], error: 'No tracking data found', rawPreview: response.data.substring(0, 300) };
     }
 
     console.log(`[DHL] AWB ${awb}: ${result.events.length} events, latest: ${result.events[0]?.description || 'none'}`);
@@ -270,7 +281,7 @@ async function trackBatchAWBs(awbs) {
   return results;
 }
 
-function computeTrackingStatus(events, shipmentDate, estimatedDelivery) {
+function computeTrackingStatus(events, shipmentDate, estimatedDelivery, dispatchDate) {
   const status = {
     currentMilestone: 'Booked',
     lastEvent: '',
@@ -290,13 +301,18 @@ function computeTrackingStatus(events, shipmentDate, estimatedDelivery) {
     status.isDelivered = latest.milestone === 'Delivered';
   }
 
-  // Calculate days in transit
-  const startDate = shipmentDate ? new Date(shipmentDate) : null;
-  if (startDate) {
+  // Calculate transit days from dispatch date (Picked Up), not booked date
+  // Fallback: use first PU event from tracking events, then shipmentDate
+  let transitStart = dispatchDate ? new Date(dispatchDate) : null;
+  if (!transitStart) {
+    const pickupEvent = events.filter(e => e.statusCode === 'PU').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+    if (pickupEvent) transitStart = new Date(pickupEvent.timestamp);
+  }
+  if (transitStart) {
     const endDate = status.isDelivered && status.lastEventTime
       ? status.lastEventTime
       : new Date();
-    status.daysInTransit = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+    status.daysInTransit = Math.floor((endDate - transitStart) / (1000 * 60 * 60 * 24));
   }
 
   // Delayed detection

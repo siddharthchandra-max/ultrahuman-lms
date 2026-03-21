@@ -2,11 +2,39 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { formatDate } from '../utils/api';
 
-const MILESTONES = ['Booked', 'Picked Up', 'In Transit', 'Customs', 'Out for Delivery', 'Delivered'];
+const MILESTONE_ORDER = ['Booked', 'Picked Up', 'In Transit', 'Customs', 'Out for Delivery', 'Delivered', 'Failed', 'Returned'];
 
-function getMilestoneIndex(status) {
-  const idx = MILESTONES.indexOf(status);
-  return idx >= 0 ? idx : 0;
+function buildTimeline(events, currentStatus) {
+  if (!events || events.length === 0) {
+    // No events from integration — just show current status
+    return [{ milestone: currentStatus || 'Booked', events: [], completed: true, current: true }];
+  }
+
+  // Sort events oldest first to build timeline in order
+  const sorted = [...events].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // Group events by milestone, preserving order of first appearance
+  const milestoneMap = new Map();
+  for (const ev of sorted) {
+    const m = ev.milestone || 'In Transit';
+    if (!milestoneMap.has(m)) milestoneMap.set(m, []);
+    milestoneMap.get(m).push(ev);
+  }
+
+  // Build timeline entries in the order milestones appeared
+  const timeline = [];
+  for (const [milestone, evts] of milestoneMap) {
+    // Sort events within milestone newest first for display
+    const displayEvents = [...evts].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    timeline.push({ milestone, events: displayEvents, completed: true, current: false });
+  }
+
+  // Mark the last one as current
+  if (timeline.length > 0) {
+    timeline[timeline.length - 1].current = true;
+  }
+
+  return timeline;
 }
 
 export default function ShipmentDetail() {
@@ -61,8 +89,8 @@ export default function ShipmentDetail() {
 
   const s = shipment;
   const currentMilestone = s.trackingStatus?.currentMilestone || s.status || 'Booked';
-  const milestoneIdx = getMilestoneIndex(currentMilestone);
   const events = s.trackingEvents || [];
+  const timeline = buildTimeline(events, currentMilestone);
   const edd = s.edd ? formatDate(s.edd) : 'N/A';
   const isDelivered = currentMilestone === 'Delivered';
   const isFailed = currentMilestone === 'Failed' || currentMilestone === 'Returned';
@@ -118,7 +146,7 @@ export default function ShipmentDetail() {
                 <div className="sd-field"><label>Shipment Weight</label><span>{s.weight || '-'}</span></div>
 
                 <div className="sd-field"><label>Delay Days</label><span>{s.trackingStatus?.isDelayed ? daysSince(s.shipmentDate) : '-'}</span></div>
-                <div className="sd-field"><label>Transit Days</label><span>{s.trackingStatus?.daysInTransit || daysSince(s.shipmentDate)}</span></div>
+                <div className="sd-field"><label>Transit Days</label><span>{s.trackingStatus?.daysInTransit || daysSince(s.dispatchDate)}</span></div>
 
                 <div className="sd-field"><label>TAT</label><span>{s.tat || s.trackingStatus?.daysInTransit || '-'}</span></div>
                 <div className="sd-field"><label>Upload Date</label><span>{s.uploadDate ? formatDate(s.uploadDate) : '-'}</span></div>
@@ -193,37 +221,28 @@ export default function ShipmentDetail() {
               <strong>{edd}</strong>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline — built from actual integration events */}
             <div className="sd-timeline">
-              {MILESTONES.map((milestone, i) => {
-                const isCompleted = i <= milestoneIdx;
-                const isCurrent = i === milestoneIdx;
-                // Find events matching this milestone
-                const milestoneEvents = events.filter(e => e.milestone === milestone);
-
-                return (
-                  <div key={milestone} className={`sd-timeline-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}>
-                    <div className="sd-timeline-dot">
-                      {isCompleted ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                      ) : null}
-                    </div>
-                    {i < MILESTONES.length - 1 && <div className={`sd-timeline-line ${isCompleted && i < milestoneIdx ? 'completed' : ''}`} />}
-                    <div className="sd-timeline-content">
-                      <div className="sd-timeline-title">{milestone}</div>
-                      {milestoneEvents.length > 0 && milestoneEvents.map((ev, j) => (
-                        <div key={j} className="sd-timeline-event">
-                          <div className="sd-timeline-event-desc">{ev.description}</div>
-                          <div className="sd-timeline-event-loc">{ev.location}</div>
-                          <div className="sd-timeline-event-time">
-                            {ev.timestamp ? new Date(ev.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date(ev.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : ''}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {timeline.map((item, i) => (
+                <div key={i} className={`sd-timeline-item completed ${item.current ? 'current' : ''}`}>
+                  <div className="sd-timeline-dot">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
-                );
-              })}
+                  {i < timeline.length - 1 && <div className="sd-timeline-line completed" />}
+                  <div className="sd-timeline-content">
+                    <div className="sd-timeline-title">{item.milestone}</div>
+                    {item.events.map((ev, j) => (
+                      <div key={j} className="sd-timeline-event">
+                        <div className="sd-timeline-event-desc">{ev.description}</div>
+                        <div className="sd-timeline-event-loc">{ev.location}</div>
+                        <div className="sd-timeline-event-time">
+                          {ev.timestamp ? new Date(ev.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date(ev.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : ''}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

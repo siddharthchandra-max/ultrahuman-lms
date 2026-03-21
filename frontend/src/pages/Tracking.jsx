@@ -157,6 +157,7 @@ export default function Tracking() {
         <select className="filter-select" value={filters.product || ''} onChange={e => setFilters(f => ({ ...f, product: e.target.value || undefined }))}>
           <option value="">Shipping Partner</option>
           <option>DHL</option>
+          <option>UPS</option>
         </select>
         <select className="filter-select" value={filters.warehouse || ''} onChange={e => setFilters(f => ({ ...f, warehouse: e.target.value || undefined }))}>
           <option value="">Warehouse</option>
@@ -252,7 +253,7 @@ export default function Tracking() {
                   <td>{s.sourceCity || '-'}</td>
                   <td>{s.destCountry || s.destName || s.destCode || '-'}</td>
                   <td style={{ color: 'var(--gray-400)' }}>-</td>
-                  <td>{daysSince(s.shipmentDate)}</td>
+                  <td>{s.trackingStatus?.daysInTransit || daysSince(s.dispatchDate)}</td>
                   <td>{s.tat || '-'}</td>
                   <td>{s.uploadDate ? formatDate(s.uploadDate) : '-'}</td>
                   <td>{s.logisticsType || '-'}</td>
