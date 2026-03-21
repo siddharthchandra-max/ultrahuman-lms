@@ -234,7 +234,6 @@ export default function Tracking() {
                 <th>Shipment Status</th>
                 <th>TAT Status</th>
                 <th>POD Status</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -271,9 +270,6 @@ export default function Tracking() {
                   <td>{statusBadge(s.status)}</td>
                   <td>{tatBadge()}</td>
                   <td>{naBadge()}</td>
-                  <td>
-                    <span style={{ color: '#0882ff', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Update Status</span>
-                  </td>
                 </tr>
               ))}
             </tbody>
