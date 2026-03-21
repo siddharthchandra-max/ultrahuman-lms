@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api, { formatINR, formatDate } from '../utils/api';
 import DateRangePicker from '../components/DateRangePicker';
 import BulkManagement from '../components/BulkManagement';
@@ -13,6 +14,7 @@ const STATUS_TABS = [
 ];
 
 export default function Tracking() {
+  const navigate = useNavigate();
   const [shipments, setShipments] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [filterOpts, setFilterOpts] = useState({ products: [], countries: [], months: [], statuses: [] });
@@ -153,7 +155,7 @@ export default function Tracking() {
       {/* Filters */}
       <div className="tracking-filters">
         <select className="filter-select" value={filters.product || ''} onChange={e => setFilters(f => ({ ...f, product: e.target.value || undefined }))}>
-          <option value="">Courier Name</option>
+          <option value="">Shipping Partner</option>
           <option>DHL</option>
         </select>
         <select className="filter-select" value={filters.warehouse || ''} onChange={e => setFilters(f => ({ ...f, warehouse: e.target.value || undefined }))}>
@@ -206,7 +208,7 @@ export default function Tracking() {
               <tr>
                 <th style={{ width: 30 }}><input type="checkbox" /></th>
                 <th>AWB No.</th>
-                <th>Courier Name</th>
+                <th>Shipping Partner</th>
                 <th>Booked Date</th>
                 <th>Dispatch Date</th>
                 <th>Week</th>
@@ -218,13 +220,9 @@ export default function Tracking() {
                 <th>Upload Date</th>
                 <th>Logistics Type</th>
                 <th>Shipment Type</th>
-                <th>Source Pincode</th>
-                <th>Source Zone</th>
                 <th>Source Country</th>
                 <th>Source State</th>
                 <th>Destination City</th>
-                <th>Destination Pincode</th>
-                <th>Destination Zone</th>
                 <th>Destination State</th>
                 <th>Shipment Weight</th>
                 <th>EDD</th>
@@ -246,7 +244,7 @@ export default function Tracking() {
               ) : shipments.map((s, i) => (
                 <tr key={s._id || i}>
                   <td><input type="checkbox" /></td>
-                  <td style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 12 }}>{s.awb}</td>
+                  <td style={{ fontWeight: 600, color: '#0882ff', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/tracking/${s.awb}`)}>{s.awb}</td>
                   <td><span style={{ fontWeight: 700, color: '#c00', fontSize: 11, letterSpacing: 0.5 }}>{s.courier || 'DHL'}</span></td>
                   <td>{formatDate(s.shipmentDate)}</td>
                   <td>{s.dispatchDate ? formatDate(s.dispatchDate) : '-'}</td>
@@ -259,13 +257,9 @@ export default function Tracking() {
                   <td>{s.uploadDate ? formatDate(s.uploadDate) : '-'}</td>
                   <td>{s.logisticsType || '-'}</td>
                   <td>{s.shipmentType || '-'}</td>
-                  <td>{s.sourcePincode || '-'}</td>
-                  <td>{s.sourceZone || '-'}</td>
                   <td>{s.sourceCountry || '-'}</td>
                   <td>{s.sourceState || '-'}</td>
                   <td>{s.destCity || '-'}</td>
-                  <td>{s.destPincode || '-'}</td>
-                  <td>{s.destZone || '-'}</td>
                   <td>{s.destState || '-'}</td>
                   <td>{s.weight ? `${s.weight.toFixed(1)}` : '-'}</td>
                   <td>{s.edd ? formatDate(s.edd) : '-'}</td>

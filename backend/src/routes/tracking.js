@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const Shipment = require('../models/Shipment');
-const { trackSingleAWB, trackBatchAWBs, computeTrackingStatus } = require('../services/dhlTracking');
+const { trackSingleAWB, trackBatchAWBs, computeTrackingStatus, mapEventCodeToMilestone } = require('../services/dhlTracking');
 
 // Track single AWB
 router.get('/:awb', auth, async (req, res) => {
@@ -230,6 +230,16 @@ router.get('/summary/stats', auth, async (req, res) => {
     res.json({ byMilestone, delayedCount, totalActive });
   } catch (err) {
     res.status(500).json({ error: 'Failed to get tracking summary' });
+  }
+});
+
+// Debug: test DHL tracking for a single AWB (no auth for quick testing)
+router.get('/debug/test/:awb', async (req, res) => {
+  try {
+    const result = await trackSingleAWB(req.params.awb);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

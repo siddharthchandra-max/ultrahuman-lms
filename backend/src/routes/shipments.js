@@ -203,14 +203,23 @@ router.post('/bulk-upload', auth, upload.single('file'), async (req, res) => {
           if (!shipment) continue;
 
           const trackingStatus = computeTrackingStatus(data.events, shipment.shipmentDate, data.estimatedDelivery);
-          await Shipment.updateOne({ awb }, {
-            $set: {
-              trackingEvents: data.events,
-              trackingStatus,
-              status: trackingStatus.currentMilestone,
-              edd: data.estimatedDelivery || shipment.edd,
-            },
-          });
+          const updateFields = {
+            trackingEvents: data.events,
+            trackingStatus,
+            status: trackingStatus.currentMilestone,
+          };
+
+          // Enrich shipment with DHL data if missing
+          if (data.origin && !shipment.sourceCity) updateFields.sourceCity = data.origin.description;
+          if (data.destination && !shipment.destCity) updateFields.destCity = data.destination.description;
+          if (data.destCountry && !shipment.destCode) updateFields.destCode = data.destCountry;
+          if (data.originCountry && !shipment.sourceCountry) updateFields.sourceCountry = data.originCountry;
+          if (data.weight && !shipment.weight) updateFields.weight = data.weight;
+          if (data.pieces && !shipment.pieces) updateFields.pieces = data.pieces;
+          if (data.shipperRef && !shipment.shipmentNumber) updateFields.shipmentNumber = data.shipperRef;
+          if (data.description && !shipment.productName) updateFields.productName = data.description;
+
+          await Shipment.updateOne({ awb }, { $set: updateFields });
         }
         console.log(`[DHL Tracking] Tracked ${Object.keys(results).length} AWBs after bulk upload`);
       }).catch(err => {

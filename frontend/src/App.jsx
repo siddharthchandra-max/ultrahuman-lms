@@ -7,6 +7,7 @@ import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
 import Upload from './pages/Upload';
 import Tracking from './pages/Tracking';
+import ShipmentDetail from './pages/ShipmentDetail';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
@@ -47,6 +48,7 @@ export default function App() {
     '/reports': 'Reports & Analytics',
     '/upload': 'Upload Data',
   };
+  const currentTitle = pageTitles[location.pathname] || (location.pathname.startsWith('/tracking/') ? 'Shipment Details' : 'Dashboard');
 
   // Close sidebar overlay on route change
   useEffect(() => { setSidebarOverlay(false); }, [location.pathname]);
@@ -60,12 +62,13 @@ export default function App() {
         </>
       )}
       <div className="main-wrapper no-sidebar">
-        <Header title={pageTitles[location.pathname] || 'Dashboard'} user={user} onLogout={handleLogout} showMenu onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} />
+        <Header title={currentTitle} user={user} onLogout={handleLogout} showMenu onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} />
         <div className="main">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/shipments" element={<Shipments />} />
             <Route path="/tracking" element={<Tracking />} />
+            <Route path="/tracking/:awb" element={<ShipmentDetail />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/upload" element={<Upload />} />

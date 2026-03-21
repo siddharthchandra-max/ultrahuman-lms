@@ -1,115 +1,259 @@
 const axios = require('axios');
 
-const DHL_API_URL = process.env.DHL_API_URL || 'https://api-eu.dhl.com/track/shipments';
-const DHL_API_KEY = process.env.DHL_API_KEY;
+// DHL Express XML PI Tracking
+const DHL_API_URL = process.env.DHL_API_URL || 'https://xmlpi-ea.dhl.com/XMLShippingServlet';
+const DHL_SITE_ID = process.env.DHL_SITE_ID;
+const DHL_PASSWORD = process.env.DHL_PASSWORD;
 
-const MILESTONE_MAP = {
-  'pre-transit': 'Booked',
-  'transit': 'In Transit',
-  'customs': 'Customs',
-  'out-for-delivery': 'Out for Delivery',
-  'delivered': 'Delivered',
-  'failure': 'Failed',
-  'return': 'Returned',
-  'unknown': 'In Transit',
+// Event code → milestone mapping based on DHL Express event codes
+const EVENT_CODE_MAP = {
+  'PU': 'Picked Up',
+  'AF': 'In Transit',
+  'PL': 'In Transit',
+  'DF': 'In Transit',
+  'AR': 'In Transit',
+  'RR': 'Customs',
+  'CR': 'Customs',
+  'CC': 'Customs',
+  'CD': 'Customs',
+  'IC': 'Customs',
+  'WC': 'Out for Delivery',
+  'OK': 'Delivered',
+  'DL': 'Delivered',
+  'DD': 'Delivered',
+  'OH': 'Failed',
+  'NH': 'Failed',
+  'BA': 'Failed',
+  'MS': 'Failed',
+  'CA': 'Failed',
+  'RT': 'Returned',
+  'RD': 'Returned',
+  'BN': 'Booked',
 };
 
-function mapStatusToMilestone(statusCode) {
-  if (!statusCode) return 'In Transit';
-  const key = statusCode.toLowerCase().replace(/\s+/g, '-');
-  return MILESTONE_MAP[key] || 'In Transit';
+function mapEventCodeToMilestone(eventCode) {
+  if (!eventCode) return 'In Transit';
+  return EVENT_CODE_MAP[eventCode.toUpperCase()] || 'In Transit';
 }
 
-function parseEvents(dhlShipment) {
-  const events = [];
-  if (!dhlShipment?.events) return events;
+// Simple XML tag extractor (no external dependency needed)
+function getTagValue(xml, tag) {
+  const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i');
+  const match = xml.match(regex);
+  return match ? match[1].trim() : null;
+}
 
-  for (const ev of dhlShipment.events) {
-    events.push({
-      timestamp: new Date(ev.timestamp),
-      location: ev.location?.address?.addressLocality || '',
-      locationCode: ev.location?.address?.countryCode || '',
-      statusCode: ev.statusCode || '',
-      description: ev.description || ev.status || '',
-      milestone: mapStatusToMilestone(ev.statusCode),
-    });
+function getAllBlocks(xml, tag) {
+  const blocks = [];
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'gi');
+  let match;
+  while ((match = regex.exec(xml)) !== null) {
+    blocks.push(match[1]);
+  }
+  return blocks;
+}
+
+// Build DHL XML tracking request
+function buildTrackingXML(awbs) {
+  const awbArray = Array.isArray(awbs) ? awbs : [awbs];
+  const now = new Date().toISOString();
+  const msgRef = ('UH_LMS_TRACK_' + Date.now()).substring(0, 28).padEnd(28, '0');
+
+  const awbElements = awbArray.map(awb => `<ArrayOfAWBNumberItem>${awb}</ArrayOfAWBNumberItem>`).join('\n      ');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<req:KnownTrackingRequest xmlns:req="http://www.dhl.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.dhl.com TrackingRequestKnown-1.0.xsd" schemaVersion="1.0">
+  <Request>
+    <ServiceHeader>
+      <MessageTime>${now}</MessageTime>
+      <MessageReference>${msgRef}</MessageReference>
+      <SiteID>${DHL_SITE_ID}</SiteID>
+      <Password>${DHL_PASSWORD}</Password>
+    </ServiceHeader>
+  </Request>
+  <LanguageCode>en</LanguageCode>
+  <AWBNumber>
+    ${awbElements}
+  </AWBNumber>
+  <LevelOfDetails>ALL_CHECKPOINTS</LevelOfDetails>
+  <PiecesEnabled>S</PiecesEnabled>
+</req:KnownTrackingRequest>`;
+}
+
+// Parse DHL XML response
+function parseXMLResponse(xml) {
+  const results = {};
+
+  // Get all AWBInfo items
+  const awbInfoBlocks = getAllBlocks(xml, 'ArrayOfAWBInfoItem');
+
+  for (const block of awbInfoBlocks) {
+    const awb = getTagValue(block, 'AWBNumber');
+    if (!awb) continue;
+
+    const actionStatus = getTagValue(block, 'ActionStatus');
+    if (actionStatus !== 'Success') {
+      results[awb] = { events: [], error: actionStatus || 'Tracking failed' };
+      continue;
+    }
+
+    // Get ShipmentInfo
+    const shipInfoBlocks = getAllBlocks(block, 'ShipmentInfo');
+    if (!shipInfoBlocks.length) {
+      results[awb] = { events: [], error: 'No shipment info' };
+      continue;
+    }
+    const shipInfo = shipInfoBlocks[0];
+
+    // Origin/Destination
+    const originBlocks = getAllBlocks(shipInfo, 'OriginServiceArea');
+    const destBlocks = getAllBlocks(shipInfo, 'DestinationServiceArea');
+    const originCode = originBlocks.length ? getTagValue(originBlocks[0], 'ServiceAreaCode') : null;
+    const originDesc = originBlocks.length ? getTagValue(originBlocks[0], 'Description') : null;
+    const destCode = destBlocks.length ? getTagValue(destBlocks[0], 'ServiceAreaCode') : null;
+    const destDesc = destBlocks.length ? getTagValue(destBlocks[0], 'Description') : null;
+
+    const shipmentDate = getTagValue(shipInfo, 'ShipmentDate');
+    const pieces = getTagValue(shipInfo, 'Pieces');
+    const weight = getTagValue(shipInfo, 'Weight');
+    const weightUnit = getTagValue(shipInfo, 'WeightUnit');
+    const shipmentDesc = getTagValue(shipInfo, 'ShipmentDescription');
+
+    // Shipper/Consignee country
+    const shipperBlocks = getAllBlocks(shipInfo, 'Shipper');
+    const consigneeBlocks = getAllBlocks(shipInfo, 'Consignee');
+    const originCountry = shipperBlocks.length ? getTagValue(shipperBlocks[0], 'CountryCode') : null;
+    const destCountry = consigneeBlocks.length ? getTagValue(consigneeBlocks[0], 'CountryCode') : null;
+
+    // Shipper reference (UHR number)
+    const refBlocks = getAllBlocks(shipInfo, 'ShipperReference');
+    const shipperRef = refBlocks.length ? getTagValue(refBlocks[0], 'ReferenceID') : null;
+
+    // Parse events
+    const eventBlocks = getAllBlocks(shipInfo, 'ArrayOfShipmentEventItem');
+    const events = [];
+
+    for (const evBlock of eventBlocks) {
+      const date = getTagValue(evBlock, 'Date');
+      const time = getTagValue(evBlock, 'Time');
+      const timestamp = date && time ? new Date(`${date}T${time}`) : null;
+
+      const serviceEventBlocks = getAllBlocks(evBlock, 'ServiceEvent');
+      const eventCode = serviceEventBlocks.length ? getTagValue(serviceEventBlocks[0], 'EventCode') : null;
+      const description = serviceEventBlocks.length ? getTagValue(serviceEventBlocks[0], 'Description') : null;
+
+      const serviceAreaBlocks = getAllBlocks(evBlock, 'ServiceArea');
+      const locationCode = serviceAreaBlocks.length ? getTagValue(serviceAreaBlocks[0], 'ServiceAreaCode') : null;
+      const locationDesc = serviceAreaBlocks.length ? getTagValue(serviceAreaBlocks[0], 'Description') : null;
+
+      const remarkBlocks = getAllBlocks(evBlock, 'EventRemarks');
+      const remarks = remarkBlocks.length ? getTagValue(remarkBlocks[0], 'FurtherDetails') : null;
+
+      if (timestamp) {
+        events.push({
+          timestamp,
+          location: locationDesc || '',
+          locationCode: locationCode || '',
+          statusCode: eventCode || '',
+          description: description || '',
+          milestone: mapEventCodeToMilestone(eventCode),
+          remarks: remarks || '',
+        });
+      }
+    }
+
+    // Sort newest first
+    events.sort((a, b) => b.timestamp - a.timestamp);
+
+    results[awb] = {
+      events,
+      error: null,
+      shipmentDate: shipmentDate ? new Date(shipmentDate) : null,
+      pieces: pieces ? parseInt(pieces) : null,
+      weight: weight ? parseFloat(weight) : null,
+      weightUnit,
+      description: shipmentDesc,
+      origin: originCode ? { code: originCode, description: originDesc } : null,
+      destination: destCode ? { code: destCode, description: destDesc } : null,
+      shipperRef,
+      originCountry,
+      destCountry,
+    };
   }
 
-  // Sort newest first
-  events.sort((a, b) => b.timestamp - a.timestamp);
-  return events;
+  return results;
 }
 
 async function trackSingleAWB(awb) {
-  if (!DHL_API_KEY) {
-    return { awb, events: [], error: 'DHL_API_KEY not configured' };
+  if (!DHL_SITE_ID || !DHL_PASSWORD) {
+    return { awb, events: [], error: 'DHL credentials not configured (DHL_SITE_ID / DHL_PASSWORD)' };
   }
 
   try {
-    const res = await axios.get(DHL_API_URL, {
-      params: { trackingNumber: awb },
-      headers: { 'DHL-API-Key': DHL_API_KEY },
-      timeout: 15000,
+    const xmlBody = buildTrackingXML(awb);
+    console.log(`[DHL] Tracking AWB: ${awb}`);
+
+    const response = await axios.post(DHL_API_URL, xmlBody, {
+      headers: { 'Content-Type': 'application/xml' },
+      timeout: 20000,
+      responseType: 'text',
     });
 
-    const shipments = res.data?.shipments;
-    if (!shipments || shipments.length === 0) {
+    const parsed = parseXMLResponse(response.data);
+    const result = parsed[String(awb)];
+
+    if (!result) {
       return { awb, events: [], error: 'No tracking data found' };
     }
 
-    const events = parseEvents(shipments[0]);
-    const estimatedDelivery = shipments[0]?.estimatedTimeOfDelivery
-      ? new Date(shipments[0].estimatedTimeOfDelivery)
-      : null;
-
-    return { awb, events, estimatedDelivery, error: null };
+    console.log(`[DHL] AWB ${awb}: ${result.events.length} events, latest: ${result.events[0]?.description || 'none'}`);
+    return { awb, ...result };
   } catch (err) {
-    const msg = err.response?.data?.detail || err.message || 'Tracking API error';
-    return { awb, events: [], error: msg };
+    const msg = err.response?.data || err.message || 'Tracking API error';
+    console.error(`[DHL] Track AWB ${awb} error:`, typeof msg === 'string' ? msg.substring(0, 200) : msg);
+    return { awb, events: [], error: typeof msg === 'string' ? msg.substring(0, 100) : err.message };
   }
 }
 
 async function trackBatchAWBs(awbs) {
   const results = {};
-  const chunks = [];
 
-  // DHL allows up to 10 tracking numbers per request
+  if (!DHL_SITE_ID || !DHL_PASSWORD) {
+    for (const awb of awbs) {
+      results[awb] = { events: [], error: 'DHL credentials not configured' };
+    }
+    return results;
+  }
+
+  // DHL allows up to 10 AWBs per request
+  const chunks = [];
   for (let i = 0; i < awbs.length; i += 10) {
     chunks.push(awbs.slice(i, i + 10));
   }
 
   for (const chunk of chunks) {
-    if (!DHL_API_KEY) {
-      for (const awb of chunk) {
-        results[awb] = { events: [], error: 'DHL_API_KEY not configured' };
-      }
-      continue;
-    }
-
     try {
-      const res = await axios.get(DHL_API_URL, {
-        params: { trackingNumber: chunk.join(',') },
-        headers: { 'DHL-API-Key': DHL_API_KEY },
+      const xmlBody = buildTrackingXML(chunk);
+      console.log(`[DHL] Batch tracking ${chunk.length} AWBs: ${chunk.join(', ')}`);
+
+      const response = await axios.post(DHL_API_URL, xmlBody, {
+        headers: { 'Content-Type': 'application/xml' },
         timeout: 30000,
+        responseType: 'text',
       });
 
-      const shipments = res.data?.shipments || [];
-      for (const s of shipments) {
-        const trackingNum = s.id || s.trackingNumber;
-        results[trackingNum] = {
-          events: parseEvents(s),
-          estimatedDelivery: s.estimatedTimeOfDelivery ? new Date(s.estimatedTimeOfDelivery) : null,
-          error: null,
-        };
-      }
+      const parsed = parseXMLResponse(response.data);
 
-      // Mark missing AWBs
       for (const awb of chunk) {
-        if (!results[awb]) {
-          results[awb] = { events: [], error: 'No tracking data found' };
+        const key = String(awb);
+        if (parsed[key]) {
+          results[key] = parsed[key];
+        } else {
+          results[key] = { events: [], error: 'No tracking data in response' };
         }
       }
     } catch (err) {
+      console.error(`[DHL] Batch track error:`, err.message);
       for (const awb of chunk) {
         if (!results[awb]) {
           results[awb] = { events: [], error: err.message };
@@ -117,7 +261,7 @@ async function trackBatchAWBs(awbs) {
       }
     }
 
-    // Rate limit: small delay between batches
+    // Rate limit between batches
     if (chunks.length > 1) {
       await new Promise(r => setTimeout(r, 500));
     }
@@ -155,20 +299,16 @@ function computeTrackingStatus(events, shipmentDate, estimatedDelivery) {
     status.daysInTransit = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
   }
 
-  // Delayed detection: 7+ days in transit OR no update in 48+ hours
+  // Delayed detection
   if (!status.isDelivered) {
-    if (status.daysInTransit > 7) {
-      status.isDelayed = true;
-    }
+    if (status.daysInTransit > 7) status.isDelayed = true;
     if (status.lastEventTime) {
       const hoursSinceUpdate = (Date.now() - status.lastEventTime.getTime()) / (1000 * 60 * 60);
-      if (hoursSinceUpdate > 48) {
-        status.isDelayed = true;
-      }
+      if (hoursSinceUpdate > 48) status.isDelayed = true;
     }
   }
 
   return status;
 }
 
-module.exports = { trackSingleAWB, trackBatchAWBs, computeTrackingStatus, mapStatusToMilestone };
+module.exports = { trackSingleAWB, trackBatchAWBs, computeTrackingStatus, mapEventCodeToMilestone };
