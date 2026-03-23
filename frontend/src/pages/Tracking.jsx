@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { formatINR, formatDate } from '../utils/api';
 import DateRangePicker from '../components/DateRangePicker';
@@ -7,10 +7,15 @@ import BulkManagement from '../components/BulkManagement';
 const STATUS_TABS = [
   { key: '', label: 'All' },
   { key: 'Booked', label: 'Booked' },
-  { key: 'In Transit', label: 'Active' },
+  { key: 'Active', label: 'Active' },
   { key: 'Delivered', label: 'Delivered' },
-  { key: 'Failed', label: 'Failed' },
-  { key: 'Unknown', label: 'No Info Yet' },
+];
+
+const ACTIVE_SUB_TABS = [
+  { key: '', label: 'All Active' },
+  { key: 'In Transit', label: 'In Transit' },
+  { key: 'Out for Delivery', label: 'Out for Delivery' },
+  { key: 'Failed', label: 'Exception' },
 ];
 
 export default function Tracking() {
@@ -21,6 +26,7 @@ export default function Tracking() {
   const [filters, setFilters] = useState({});
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState('');
   const [loading, setLoading] = useState(true);
   const [statusCounts, setStatusCounts] = useState({});
   const [viewMode, setViewMode] = useState('AWB');
@@ -28,6 +34,10 @@ export default function Tracking() {
   const [dateTo, setDateTo] = useState('2026-02-28');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
+  const [colFilters, setColFilters] = useState({});
+  const [colSort, setColSort] = useState({ col: null, dir: null }); // dir: 'asc' | 'desc'
+  const [openColFilter, setOpenColFilter] = useState(null);
+  const colFilterRef = useRef(null);
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
@@ -44,10 +54,19 @@ export default function Tracking() {
     try {
       const params = { page, limit: 50, sortBy: 'shipmentDate', sortOrder: -1 };
       if (search) params.search = search;
-      if (activeTab) params.status = activeTab;
+      if (activeTab === 'Active') {
+        if (activeSubTab) {
+          params.status = activeSubTab;
+        } else {
+          params.status = 'In Transit,Picked Up,Customs,Out for Delivery,Failed';
+        }
+      } else if (activeTab) {
+        params.status = activeTab;
+      }
       if (filters.warehouse) params.warehouse = filters.warehouse;
       if (filters.destCode) params.destCode = filters.destCode;
       if (filters.product) params.product = filters.product;
+      if (filters.logisticsType) params.logisticsType = filters.logisticsType;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
       const { data } = await api.get('/shipments', { params });
@@ -55,7 +74,7 @@ export default function Tracking() {
       setPagination(data.pagination);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [search, activeTab, filters, dateFrom, dateTo]);
+  }, [search, activeTab, activeSubTab, filters, dateFrom, dateTo]);
 
   useEffect(() => { fetch(1); }, [fetch]);
 
@@ -65,8 +84,8 @@ export default function Tracking() {
 
   const getTabCount = (key) => {
     if (!key) return getTotal();
-    if (key === 'In Transit') {
-      return (statusCounts['In Transit'] || 0) + (statusCounts['Picked Up'] || 0) + (statusCounts['Customs'] || 0) + (statusCounts['Out for Delivery'] || 0);
+    if (key === 'Active') {
+      return (statusCounts['In Transit'] || 0) + (statusCounts['Picked Up'] || 0) + (statusCounts['Customs'] || 0) + (statusCounts['Out for Delivery'] || 0) + (statusCounts['Failed'] || 0);
     }
     return statusCounts[key] || 0;
   };
@@ -95,6 +114,18 @@ export default function Tracking() {
     <span style={{ padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: '#fee2e2', color: '#991b1b' }}>NA</span>
   );
 
+  const calcTAT = (s) => {
+    if (!s.dispatchDate) return '-';
+    const dispatch = new Date(s.dispatchDate);
+    // Use actual delivered date if delivered, otherwise EDD
+    const endDate = s.trackingStatus?.isDelivered && s.trackingStatus?.lastEventTime
+      ? new Date(s.trackingStatus.lastEventTime)
+      : s.edd ? new Date(s.edd) : null;
+    if (!endDate) return '-';
+    const days = Math.round((endDate - dispatch) / (1000 * 60 * 60 * 24));
+    return days >= 0 ? `${days}d` : '-';
+  };
+
   const daysSince = (date) => {
     if (!date) return '-';
     const d = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
@@ -109,6 +140,106 @@ export default function Tracking() {
     if (hrs < 24) return `${hrs}hrs ago`;
     return `${Math.floor(hrs / 24)}d ago`;
   };
+
+  const getWeek = (s) => s.week || (s.dispatchDate ? 'W' + Math.ceil(((new Date(s.dispatchDate) - new Date(new Date(s.dispatchDate).getFullYear(), 0, 1)) / 86400000 + new Date(new Date(s.dispatchDate).getFullYear(), 0, 1).getDay() + 1) / 7) : '-');
+
+  const getColValue = (s, col) => {
+    if (col === 'week') return getWeek(s);
+    if (col === 'transitDays') { const v = s.trackingStatus?.daysInTransit ?? daysSince(s.dispatchDate); return v === '-' ? '-' : String(v); }
+    if (col === 'delayDays') return '-';
+    if (col === 'tat') return calcTAT(s);
+    if (col === 'dispatchDate') return s.dispatchDate ? formatDate(s.dispatchDate) : '-';
+    return '-';
+  };
+
+  const colFilterOptions = useMemo(() => {
+    const opts = {};
+    ['week', 'transitDays', 'delayDays', 'tat', 'dispatchDate'].forEach(col => {
+      const vals = [...new Set(shipments.map(s => getColValue(s, col)))].filter(Boolean).sort((a, b) => {
+        const na = parseFloat(a), nb = parseFloat(b);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
+      opts[col] = vals;
+    });
+    return opts;
+  }, [shipments]);
+
+  const filteredShipments = useMemo(() => {
+    const active = Object.entries(colFilters).filter(([, vals]) => vals.size > 0);
+    let result = active.length === 0 ? [...shipments] : shipments.filter(s => active.every(([col, vals]) => vals.has(getColValue(s, col))));
+    if (colSort.col && colSort.dir) {
+      result = [...result].sort((a, b) => {
+        let va = getColValue(a, colSort.col), vb = getColValue(b, colSort.col);
+        if (va === '-') va = '';
+        if (vb === '-') vb = '';
+        const na = parseFloat(va), nb = parseFloat(vb);
+        let cmp;
+        if (!isNaN(na) && !isNaN(nb)) { cmp = na - nb; }
+        else if (colSort.col === 'dispatchDate') { cmp = new Date(a.dispatchDate || 0) - new Date(b.dispatchDate || 0); }
+        else { cmp = String(va).localeCompare(String(vb)); }
+        return colSort.dir === 'desc' ? -cmp : cmp;
+      });
+    }
+    return result;
+  }, [shipments, colFilters, colSort]);
+
+  // Close column filter on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (colFilterRef.current && !colFilterRef.current.contains(e.target)) setOpenColFilter(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggleColFilter = (col, val) => {
+    setColFilters(prev => {
+      const s = new Set(prev[col] || []);
+      s.has(val) ? s.delete(val) : s.add(val);
+      return { ...prev, [col]: s };
+    });
+  };
+
+  const clearColFilter = (col) => setColFilters(prev => ({ ...prev, [col]: new Set() }));
+
+  const ColFilterHeader = ({ label, col }) => (
+    <th style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        {label}
+        <span
+          style={{ cursor: 'pointer', opacity: (colFilters[col]?.size || (colSort.col === col)) ? 1 : 0.4, fontSize: 10 }}
+          onClick={(e) => { e.stopPropagation(); setOpenColFilter(openColFilter === col ? null : col); }}
+        >{colSort.col === col ? (colSort.dir === 'asc' ? '↑' : '↓') : '▼'}</span>
+      </div>
+      {openColFilter === col && (
+        <div ref={colFilterRef} className="col-filter-dropdown" onClick={e => e.stopPropagation()}>
+          <div className="col-filter-sort">
+            <div
+              className={`col-sort-btn ${colSort.col === col && colSort.dir === 'asc' ? 'active' : ''}`}
+              onClick={() => setColSort(colSort.col === col && colSort.dir === 'asc' ? { col: null, dir: null } : { col, dir: 'asc' })}
+            >↑ Low to High</div>
+            <div
+              className={`col-sort-btn ${colSort.col === col && colSort.dir === 'desc' ? 'active' : ''}`}
+              onClick={() => setColSort(colSort.col === col && colSort.dir === 'desc' ? { col: null, dir: null } : { col, dir: 'desc' })}
+            >↓ High to Low</div>
+          </div>
+          <div className="col-filter-header">
+            <span style={{ fontWeight: 600, fontSize: 11 }}>Filter {label}</span>
+            <span style={{ cursor: 'pointer', color: '#0882ff', fontSize: 10 }} onClick={() => clearColFilter(col)}>Clear</span>
+          </div>
+          <div className="col-filter-list">
+            {(colFilterOptions[col] || []).map(val => (
+              <label key={val} className="col-filter-item">
+                <input type="checkbox" checked={colFilters[col]?.has(val) || false} onChange={() => toggleColFilter(col, val)} />
+                <span>{val}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </th>
+  );
 
   return (
     <div className="tracking-page">
@@ -186,6 +317,11 @@ export default function Tracking() {
           <option>Forward</option>
           <option>Reverse</option>
         </select>
+        <select className="filter-select" value={filters.logisticsType || ''} onChange={e => setFilters(f => ({ ...f, logisticsType: e.target.value || undefined }))}>
+          <option value="">Logistics Type</option>
+          <option>Cross Border</option>
+          <option>Domestic</option>
+        </select>
       </div>
 
       {/* Status Tabs */}
@@ -194,9 +330,18 @@ export default function Tracking() {
           <div
             key={t.key}
             className={`tracking-tab ${activeTab === t.key ? 'active' : ''}`}
-            onClick={() => setActiveTab(t.key)}
+            onClick={() => { setActiveTab(t.key); setActiveSubTab(''); }}
           >
             {t.label} <span className="tracking-tab-count">{getTabCount(t.key).toLocaleString()}</span>
+          </div>
+        ))}
+        {activeTab === 'Active' && ACTIVE_SUB_TABS.map(st => (
+          <div
+            key={st.key}
+            className={`tracking-tab sub-tab ${activeSubTab === st.key ? 'active' : ''}`}
+            onClick={() => setActiveSubTab(st.key)}
+          >
+            {st.label} <span className="tracking-tab-count">{st.key ? (statusCounts[st.key] || 0).toLocaleString() : getTabCount('Active').toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -211,13 +356,13 @@ export default function Tracking() {
                 <th>AWB No.</th>
                 <th>Shipping Partner</th>
                 <th>Booked Date</th>
-                <th>Dispatch Date</th>
-                <th>Week</th>
+                <ColFilterHeader label="Dispatch Date" col="dispatchDate" />
+                <ColFilterHeader label="Week" col="week" />
                 <th>Source City</th>
                 <th>Destination Country</th>
-                <th>Delay Days</th>
-                <th>Transit Days</th>
-                <th>TAT</th>
+                <ColFilterHeader label="Delay Days" col="delayDays" />
+                <ColFilterHeader label="Transit Days" col="transitDays" />
+                <ColFilterHeader label="TAT" col="tat" />
                 <th>Upload Date</th>
                 <th>Logistics Type</th>
                 <th>Shipment Type</th>
@@ -226,13 +371,14 @@ export default function Tracking() {
                 <th>Destination City</th>
                 <th>Destination State</th>
                 <th>Shipment Weight</th>
-                <th>EDD</th>
+                <th>Estimated Delivery Date</th>
+                <th>Actual Delivery Date</th>
                 <th>Shipment Status Time</th>
                 <th>Shipment Status Description</th>
                 <th>Shipment Status Event</th>
                 <th>Last Synced</th>
                 <th>Shipment Status</th>
-                <th>TAT Status</th>
+                <th>Shipment Status TAT</th>
                 <th>POD Status</th>
               </tr>
             </thead>
@@ -241,19 +387,19 @@ export default function Tracking() {
                 <tr><td colSpan={32} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>Loading...</td></tr>
               ) : shipments.length === 0 ? (
                 <tr><td colSpan={32} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>No shipments found</td></tr>
-              ) : shipments.map((s, i) => (
+              ) : filteredShipments.map((s, i) => (
                 <tr key={s._id || i}>
                   <td><input type="checkbox" /></td>
-                  <td style={{ fontWeight: 600, color: '#0882ff', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/tracking/${s.awb}`)}>{s.awb}</td>
-                  <td><span style={{ fontWeight: 700, color: '#c00', fontSize: 11, letterSpacing: 0.5 }}>{s.courier || 'DHL'}</span></td>
-                  <td>{formatDate(s.shipmentDate)}</td>
+                  <td style={{ fontWeight: 700, color: '#000', fontSize: 12, cursor: 'pointer' }} onClick={() => navigate(`/tracking/${s.awb}`)}>{s.awb}</td>
+                  <td style={{ fontWeight: 700, color: '#000', fontSize: 11 }}>{s.courier || 'DHL'}</td>
+                  <td>{s.shipmentDate ? formatDate(s.shipmentDate) : '-'}</td>
                   <td>{s.dispatchDate ? formatDate(s.dispatchDate) : '-'}</td>
-                  <td>{s.week || '-'}</td>
+                  <td>{getWeek(s)}</td>
                   <td>{s.sourceCity || '-'}</td>
                   <td>{s.destCountry || s.destName || s.destCode || '-'}</td>
                   <td style={{ color: 'var(--gray-400)' }}>-</td>
-                  <td>{s.trackingStatus?.daysInTransit || daysSince(s.dispatchDate)}</td>
-                  <td>{s.tat || '-'}</td>
+                  <td>{s.trackingStatus?.daysInTransit ?? daysSince(s.dispatchDate)}</td>
+                  <td>{calcTAT(s)}</td>
                   <td>{s.uploadDate ? formatDate(s.uploadDate) : '-'}</td>
                   <td>{s.logisticsType || '-'}</td>
                   <td>{s.shipmentType || '-'}</td>
@@ -263,6 +409,7 @@ export default function Tracking() {
                   <td>{s.destState || '-'}</td>
                   <td>{s.weight ? `${s.weight.toFixed(1)}` : '-'}</td>
                   <td>{s.edd ? formatDate(s.edd) : '-'}</td>
+                  <td>{s.trackingStatus?.isDelivered && s.trackingStatus?.lastEventTime ? formatDate(s.trackingStatus.lastEventTime) : '-'}</td>
                   <td style={{ fontSize: 11 }}>{s.trackingStatus?.lastEventTime ? formatDate(s.trackingStatus.lastEventTime) : '-'}</td>
                   <td style={{ fontSize: 11, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.trackingStatus?.lastEvent || '-'}</td>
                   <td style={{ fontSize: 11 }}>{s.trackingStatus?.currentMilestone || '-'}</td>

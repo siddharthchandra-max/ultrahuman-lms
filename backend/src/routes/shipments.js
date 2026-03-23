@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 // GET /api/shipments — paginated list
 router.get('/', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 50, search, product, destCode, month, status, sortBy = 'shipmentDate', sortOrder = -1 } = req.query;
+    const { page = 1, limit = 50, search, product, destCode, month, status, logisticsType, sortBy = 'shipmentDate', sortOrder = -1 } = req.query;
     const match = {};
     if (search) {
       match.$or = [
@@ -24,7 +24,14 @@ router.get('/', auth, async (req, res) => {
     if (product) match.productName = product;
     if (destCode) match.destCode = destCode;
     if (month) match.month = month;
-    if (status) match.status = status;
+    if (logisticsType) match.logisticsType = logisticsType;
+    if (status) {
+      if (status.includes(',')) {
+        match.status = { $in: status.split(',').map(s => s.trim()) };
+      } else {
+        match.status = status;
+      }
+    }
 
     const [shipments, total] = await Promise.all([
       Shipment.find(match)
@@ -146,7 +153,12 @@ router.post('/bulk-upload', auth, upload.single('file'), async (req, res) => {
         }
       }
 
-      if (!doc.awb) {
+      // Replace empty/whitespace-only string values with '-'
+      for (const [k, v] of Object.entries(doc)) {
+        if (typeof v === 'string' && v.trim() === '' && k !== 'status') doc[k] = '-';
+      }
+
+      if (!doc.awb || doc.awb === '-') {
         errors.push({ row: i + 2, error: 'AWB No. is required' });
         continue;
       }
@@ -160,12 +172,10 @@ router.post('/bulk-upload', auth, upload.single('file'), async (req, res) => {
       if (doc.weight) doc.weight = parseFloat(doc.weight) || 0;
       if (doc.pieces) doc.pieces = parseInt(doc.pieces) || 1;
 
-      // Derive fields
+      // Derive month from shipment date
       if (doc.shipmentDate) {
         const d = new Date(doc.shipmentDate);
         doc.month = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-        const startOfYear = new Date(d.getFullYear(), 0, 1);
-        doc.week = 'W' + Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
       }
 
       // Map dest fields
@@ -209,21 +219,25 @@ router.post('/bulk-upload', auth, upload.single('file'), async (req, res) => {
           status: trackingStatus.currentMilestone,
         };
 
-        // Enrich shipment with tracking data if missing
-        if (data.origin && !shipment.sourceCity) updateFields.sourceCity = data.origin.description;
-        if (data.destination && !shipment.destCity) updateFields.destCity = data.destination.description;
-        if (data.destCountry && !shipment.destCode) updateFields.destCode = data.destCountry;
-        if (data.originCountry && !shipment.sourceCountry) updateFields.sourceCountry = data.originCountry;
+        // Enrich shipment with tracking data if missing (use '-' for blank values)
+        const valOrDash = (v) => (typeof v === 'string' && v.trim() === '') ? '-' : v;
+        if (data.origin && !shipment.sourceCity) updateFields.sourceCity = valOrDash(data.origin.description) || '-';
+        if (data.destination && !shipment.destCity) updateFields.destCity = valOrDash(data.destination.description) || '-';
+        if (data.destCountry && !shipment.destCode) updateFields.destCode = valOrDash(data.destCountry) || '-';
+        if (data.originCountry && !shipment.sourceCountry) updateFields.sourceCountry = valOrDash(data.originCountry) || '-';
         if (data.weight && !shipment.weight) updateFields.weight = data.weight;
         if (data.pieces && !shipment.pieces) updateFields.pieces = data.pieces;
-        if (data.shipperRef && !shipment.shipmentNumber) updateFields.shipmentNumber = data.shipperRef;
-        if (data.description && !shipment.productName) updateFields.productName = data.description;
+        if (data.shipperRef && !shipment.shipmentNumber) updateFields.shipmentNumber = valOrDash(data.shipperRef) || '-';
+        if (data.description && !shipment.productName) updateFields.productName = valOrDash(data.description) || '-';
         if (data.estimatedDelivery) updateFields.edd = data.estimatedDelivery;
 
         // Set dispatch date from first Picked Up (PU/DP) event
         const pickupEvent = data.events.filter(e => e.statusCode === 'PU' || e.statusCode === 'DP').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
         if (pickupEvent && pickupEvent.timestamp) {
-          updateFields.dispatchDate = new Date(pickupEvent.timestamp);
+          const dispDate = new Date(pickupEvent.timestamp);
+          updateFields.dispatchDate = dispDate;
+          const startOfYear = new Date(dispDate.getFullYear(), 0, 1);
+          updateFields.week = 'W' + Math.ceil(((dispDate - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
         }
 
         await Shipment.updateOne({ awb }, { $set: updateFields });

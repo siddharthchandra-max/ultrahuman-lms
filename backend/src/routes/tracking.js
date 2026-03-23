@@ -54,10 +54,14 @@ router.get('/:awb', auth, async (req, res) => {
         shipment.trackingStatus = ts;
         shipment.status = ts.currentMilestone;
 
-        // Set dispatch date from first Picked Up (PU) event
+        // Set dispatch date and week from first Picked Up (PU) event
         if (!shipment.dispatchDate) {
           const pickupEvent = shipment.trackingEvents.filter(e => e.statusCode === 'PU' || e.statusCode === 'DP').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
-          if (pickupEvent) shipment.dispatchDate = new Date(pickupEvent.timestamp);
+          if (pickupEvent) {
+            shipment.dispatchDate = new Date(pickupEvent.timestamp);
+            const startOfYear = new Date(shipment.dispatchDate.getFullYear(), 0, 1);
+            shipment.week = 'W' + Math.ceil(((shipment.dispatchDate - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+          }
         }
       } else {
         // Update lastTrackedAt even if no events
