@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api, { formatINR, formatDate } from '../utils/api';
 import DateRangePicker from '../components/DateRangePicker';
 import BulkManagement from '../components/BulkManagement';
+import MultiSelect from '../components/MultiSelect';
 
 const STATUS_TABS = [
   { key: '', label: 'All' },
@@ -65,14 +66,14 @@ export default function Tracking() {
       } else if (activeTab) {
         params.status = activeTab;
       }
-      if (filters.warehouse) params.warehouse = filters.warehouse;
+      if (filters.warehouse?.length) params.warehouse = filters.warehouse.join(',');
       if (filters.destCode) params.destCode = filters.destCode;
       if (filters.product) params.product = filters.product;
-      if (filters.courier) params.courier = filters.courier;
-      if (filters.shipmentType) params.shipmentType = filters.shipmentType;
-      if (filters.logisticsType) params.logisticsType = filters.logisticsType;
-      if (filters.tatStatus) params.tatStatus = filters.tatStatus;
-      if (filters.movementType) params.movementType = filters.movementType;
+      if (filters.courier?.length) params.courier = filters.courier.join(',');
+      if (filters.shipmentType?.length) params.shipmentType = filters.shipmentType.join(',');
+      if (filters.logisticsType?.length) params.logisticsType = filters.logisticsType.join(',');
+      if (filters.tatStatus?.length) params.tatStatus = filters.tatStatus.join(',');
+      if (filters.movementType?.length) params.movementType = filters.movementType.join(',');
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
       const { data } = await api.get('/shipments', { params });
@@ -306,47 +307,13 @@ export default function Tracking() {
 
       {/* Filters */}
       <div className="tracking-filters">
-        <select className="filter-select" value={filters.courier || ''} onChange={e => setFilters(f => ({ ...f, courier: e.target.value || undefined }))}>
-          <option value="">Shipping Partner</option>
-          <option>UPS</option>
-          <option>DHL</option>
-          <option>BlueDart</option>
-          <option>FedEx</option>
-        </select>
-        <select className="filter-select" value={filters.warehouse || ''} onChange={e => setFilters(f => ({ ...f, warehouse: e.target.value || undefined }))}>
-          <option value="">Warehouse</option>
-          <option>BLR</option>
-          <option>UK</option>
-          <option>USA</option>
-          <option>NL</option>
-          <option>ROW</option>
-        </select>
-        <select className="filter-select" value={filters.shipmentType || ''} onChange={e => setFilters(f => ({ ...f, shipmentType: e.target.value || undefined }))}>
-          <option value="">Shipment Type</option>
-          <option>B2C</option>
-          <option>B2B</option>
-          <option>BBX</option>
-        </select>
-        <select className="filter-select" value={filters.tatStatus || ''} onChange={e => setFilters(f => ({ ...f, tatStatus: e.target.value || undefined }))}>
-          <option value="">Shipment Status TAT</option>
-          <option>Delayed</option>
-          <option>On-time</option>
-        </select>
-        <select className="filter-select" value={filters.orderType || ''} onChange={e => setFilters(f => ({ ...f, orderType: e.target.value || undefined }))}>
-          <option value="">Shipment Order Type</option>
-          <option>COD Order</option>
-          <option>Prepaid Order</option>
-        </select>
-        <select className="filter-select" value={filters.movementType || ''} onChange={e => setFilters(f => ({ ...f, movementType: e.target.value || undefined }))}>
-          <option value="">Movement Order Type</option>
-          <option>Forward</option>
-          <option>Reverse</option>
-        </select>
-        <select className="filter-select" value={filters.logisticsType || ''} onChange={e => setFilters(f => ({ ...f, logisticsType: e.target.value || undefined }))}>
-          <option value="">Logistics Type</option>
-          <option>Cross Border</option>
-          <option>Domestic</option>
-        </select>
+        <MultiSelect label="Shipping Partner" options={['UPS', 'DHL', 'BlueDart', 'FedEx']} selected={filters.courier || []} onChange={v => setFilters(f => ({ ...f, courier: v.length ? v : undefined }))} />
+        <MultiSelect label="Warehouse" options={['BLR', 'UK', 'USA', 'NL', 'ROW']} selected={filters.warehouse || []} onChange={v => setFilters(f => ({ ...f, warehouse: v.length ? v : undefined }))} />
+        <MultiSelect label="Shipment Type" options={['B2C', 'B2B', 'BBX']} selected={filters.shipmentType || []} onChange={v => setFilters(f => ({ ...f, shipmentType: v.length ? v : undefined }))} />
+        <MultiSelect label="Shipment Status TAT" options={['Delayed', 'On-time']} selected={filters.tatStatus || []} onChange={v => setFilters(f => ({ ...f, tatStatus: v.length ? v : undefined }))} />
+        <MultiSelect label="Shipment Order Type" options={['COD Order', 'Prepaid Order']} selected={filters.orderType || []} onChange={v => setFilters(f => ({ ...f, orderType: v.length ? v : undefined }))} />
+        <MultiSelect label="Movement Order Type" options={['Forward', 'Reverse']} selected={filters.movementType || []} onChange={v => setFilters(f => ({ ...f, movementType: v.length ? v : undefined }))} />
+        <MultiSelect label="Logistics Type" options={['Cross Border', 'Domestic']} selected={filters.logisticsType || []} onChange={v => setFilters(f => ({ ...f, logisticsType: v.length ? v : undefined }))} />
       </div>
 
       {/* Status Tabs */}

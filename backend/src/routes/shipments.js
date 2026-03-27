@@ -23,15 +23,38 @@ router.get('/', auth, async (req, res) => {
       ];
     }
     if (product) match.productName = product;
-    if (courier) match.courier = courier;
+    if (courier) {
+      const vals = courier.split(',').map(s => s.trim());
+      match.courier = vals.length > 1 ? { $in: vals } : vals[0];
+    }
     if (destCode) match.destCode = destCode;
     if (month) match.month = month;
-    if (logisticsType) match.logisticsType = logisticsType;
-    if (shipmentType) match.shipmentType = { $regex: shipmentType, $options: 'i' };
-    if (warehouse) match.warehouse = warehouse;
-    if (movementType) match.movementType = movementType;
-    if (tatStatus === 'Delayed') match['trackingStatus.isDelayed'] = true;
-    if (tatStatus === 'On-time') match['trackingStatus.isDelayed'] = { $ne: true };
+    if (logisticsType) {
+      const vals = logisticsType.split(',').map(s => s.trim());
+      match.logisticsType = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (shipmentType) {
+      const vals = shipmentType.split(',').map(s => s.trim());
+      match.shipmentType = vals.length > 1 ? { $in: vals.map(v => new RegExp(v, 'i')) } : { $regex: vals[0], $options: 'i' };
+    }
+    if (warehouse) {
+      const vals = warehouse.split(',').map(s => s.trim());
+      match.warehouse = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (movementType) {
+      const vals = movementType.split(',').map(s => s.trim());
+      match.movementType = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (tatStatus) {
+      const vals = tatStatus.split(',').map(s => s.trim());
+      if (vals.includes('Delayed') && vals.includes('On-time')) {
+        // Both selected = no filter
+      } else if (vals.includes('Delayed')) {
+        match['trackingStatus.isDelayed'] = true;
+      } else if (vals.includes('On-time')) {
+        match['trackingStatus.isDelayed'] = { $ne: true };
+      }
+    }
     if (dateFrom || dateTo) {
       match.shipmentDate = {};
       if (dateFrom) match.shipmentDate.$gte = new Date(dateFrom);
