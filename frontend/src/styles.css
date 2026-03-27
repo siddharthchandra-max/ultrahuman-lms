@@ -106,6 +106,35 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 [data-theme="night"] .stat-card, [data-theme="night"] .card { background: #161b22; border-color: #21262d; }
 [data-theme="night"] .login-card { background: #161b22; }
 [data-theme="night"] input, [data-theme="night"] select, [data-theme="night"] textarea { background: #0d1117; border-color: #21262d; color: #e6edf3; }
+/* Night — tracking page */
+[data-theme="night"] .tracking-page { background: #0d1117; }
+[data-theme="night"] .tracking-topbar { background: #161b22; border-color: #21262d; box-shadow: none; }
+[data-theme="night"] .tracking-toggle { background: #21262d; }
+[data-theme="night"] .tracking-toggle span { color: #8b949e; }
+[data-theme="night"] .tracking-toggle span.active { background: #1f6feb; color: #fff; }
+[data-theme="night"] .tracking-search { background: #0d1117; border-color: #21262d; color: #e6edf3; }
+[data-theme="night"] .tracking-search:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.1); background: #0d1117; }
+[data-theme="night"] .tracking-search-icon { stroke: #484f58; }
+[data-theme="night"] .tracking-filters { background: #0d1117; }
+[data-theme="night"] .tracking-table th { background: #161b22; color: #8b949e; border-color: #21262d; }
+[data-theme="night"] .tracking-table td { background: #0d1117; color: #c9d1d9; border-color: #21262d; }
+[data-theme="night"] .tracking-table tbody tr:hover td { background: #161b22; }
+[data-theme="night"] .tracking-table tbody tr:nth-child(even) td { background: #0d1117; }
+[data-theme="night"] .tracking-table tbody tr:nth-child(even):hover td { background: #161b22; }
+[data-theme="night"] .tracking-table td[style*="font-weight: 700"] { color: #e6edf3; }
+[data-theme="night"] .tracking-pagination { color: #8b949e; }
+[data-theme="night"] .tracking-page-btn { background: #161b22; border-color: #21262d; color: #c9d1d9; }
+[data-theme="night"] .tracking-page-btn:hover:not(:disabled) { background: #21262d; border-color: #58a6ff; color: #58a6ff; }
+[data-theme="night"] .tracking-page-num { color: #c9d1d9; }
+[data-theme="night"] .col-filter-dropdown { background: #161b22; border-color: #21262d; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+[data-theme="night"] .col-filter-sort { border-color: #21262d; }
+[data-theme="night"] .col-sort-btn { color: #8b949e; }
+[data-theme="night"] .col-sort-btn:hover { background: #21262d; color: #e6edf3; }
+[data-theme="night"] .col-sort-btn.active { background: #1f6feb22; color: #58a6ff; }
+[data-theme="night"] .col-filter-header { border-color: #21262d; color: #8b949e; }
+[data-theme="night"] .col-filter-list label { color: #c9d1d9; }
+[data-theme="night"] .view-mode-toggle { background: #21262d; }
+[data-theme="night"] .status-badge { opacity: 0.9; }
 
 /* ====== EYE CARE THEME ====== */
 [data-theme="eye-care"] {
@@ -161,6 +190,31 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 [data-theme="eye-care"] .pagination button.active { background: #8b7355; color: #fff; }
 [data-theme="eye-care"] input, [data-theme="eye-care"] select, [data-theme="eye-care"] textarea { background: #faf6f0; border-color: #ddd4c4; color: #3e3529; }
 [data-theme="eye-care"] .login-card { background: #ede6d8; }
+/* Eye Care — tracking page */
+[data-theme="eye-care"] .tracking-page { background: #f5efe5; }
+[data-theme="eye-care"] .tracking-topbar { background: #ede6d8; border-color: #ddd4c4; box-shadow: none; }
+[data-theme="eye-care"] .tracking-toggle { background: #e8dfd2; }
+[data-theme="eye-care"] .tracking-toggle span { color: #a69882; }
+[data-theme="eye-care"] .tracking-toggle span.active { background: #8b7355; color: #fff; }
+[data-theme="eye-care"] .tracking-search { background: #faf6f0; border-color: #ddd4c4; color: #3e3529; }
+[data-theme="eye-care"] .tracking-search:focus { border-color: #8b7355; box-shadow: 0 0 0 3px rgba(139,115,85,0.1); }
+[data-theme="eye-care"] .tracking-search-icon { stroke: #a69882; }
+[data-theme="eye-care"] .tracking-filters { background: #f5efe5; }
+[data-theme="eye-care"] .tracking-table th { background: #ede6d8; color: #7d7264; border-color: #ddd4c4; }
+[data-theme="eye-care"] .tracking-table td { background: #faf6f0; color: #5c5347; border-color: #e8dfd2; }
+[data-theme="eye-care"] .tracking-table tbody tr:hover td { background: #f0e9dc; }
+[data-theme="eye-care"] .tracking-table tbody tr:nth-child(even) td { background: #f5efe5; }
+[data-theme="eye-care"] .tracking-table tbody tr:nth-child(even):hover td { background: #f0e9dc; }
+[data-theme="eye-care"] .tracking-pagination { color: #7d7264; }
+[data-theme="eye-care"] .tracking-page-btn { background: #faf6f0; border-color: #ddd4c4; color: #5c5347; }
+[data-theme="eye-care"] .tracking-page-btn:hover:not(:disabled) { background: #ede6d8; border-color: #8b7355; color: #8b7355; }
+[data-theme="eye-care"] .tracking-page-num { color: #5c5347; }
+[data-theme="eye-care"] .col-filter-dropdown { background: #faf6f0; border-color: #ddd4c4; }
+[data-theme="eye-care"] .col-sort-btn { color: #7d7264; }
+[data-theme="eye-care"] .col-sort-btn:hover { background: #ede6d8; }
+[data-theme="eye-care"] .col-sort-btn.active { background: #e8dfd2; color: #5c4a2e; }
+[data-theme="eye-care"] .col-filter-header { border-color: #ddd4c4; color: #7d7264; }
+[data-theme="eye-care"] .view-mode-toggle { background: #e8dfd2; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
