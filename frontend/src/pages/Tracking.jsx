@@ -307,7 +307,6 @@ export default function Tracking() {
           <option value="">Shipping Partner</option>
           <option>UPS</option>
           <option>DHL</option>
-          <option>Swiship</option>
           <option>BlueDart</option>
           <option>FedEx</option>
         </select>

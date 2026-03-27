@@ -118,11 +118,14 @@ async function syncFromMetabase(sinceDate = '2026-03-01') {
   const allRows = await fetchMetabaseData();
   console.log(`[Metabase] Fetched ${allRows.length} total rows from Metabase`);
 
-  // Filter by date
+  // Filter by date and skip unsupported couriers (Swiship, Unknown)
+  const SKIP_COURIERS = ['Swiship', 'Unknown'];
   const cutoff = new Date(sinceDate);
   const rows = allRows.filter(r => {
     const d = r.SHIPPING_DATE_NEW ? new Date(r.SHIPPING_DATE_NEW) : null;
-    return d && d >= cutoff;
+    if (!d || d < cutoff) return false;
+    const courier = detectCourier(r.RING_TRACKING_URL_TO);
+    return !SKIP_COURIERS.includes(courier);
   });
   console.log(`[Metabase] ${rows.length} rows after date filter (>= ${sinceDate})`);
 
