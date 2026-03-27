@@ -20,6 +20,12 @@ export default function App() {
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOverlay, setSidebarOverlay] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('uh_theme') || 'bright');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('uh_theme', theme);
+  }, [theme]);
 
   const handleLogin = (t, u) => {
     setToken(t);
@@ -62,7 +68,7 @@ export default function App() {
         </>
       )}
       <div className="main-wrapper no-sidebar">
-        <Header title={currentTitle} user={user} onLogout={handleLogout} showMenu onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} />
+        <Header title={currentTitle} user={user} onLogout={handleLogout} showMenu onMenuClick={() => setSidebarOverlay(!sidebarOverlay)} theme={theme} onThemeChange={setTheme} />
         <div className="main">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
