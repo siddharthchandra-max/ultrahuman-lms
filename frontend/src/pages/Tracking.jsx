@@ -69,7 +69,10 @@ export default function Tracking() {
       if (filters.destCode) params.destCode = filters.destCode;
       if (filters.product) params.product = filters.product;
       if (filters.courier) params.courier = filters.courier;
+      if (filters.shipmentType) params.shipmentType = filters.shipmentType;
       if (filters.logisticsType) params.logisticsType = filters.logisticsType;
+      if (filters.tatStatus) params.tatStatus = filters.tatStatus;
+      if (filters.movementType) params.movementType = filters.movementType;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
       const { data } = await api.get('/shipments', { params });

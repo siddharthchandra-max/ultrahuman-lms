@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 // GET /api/shipments — paginated list
 router.get('/', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 50, search, product, courier, destCode, month, status, logisticsType, dateFrom, dateTo, sortBy = 'shipmentDate', sortOrder = -1 } = req.query;
+    const { page = 1, limit = 50, search, product, courier, destCode, month, status, logisticsType, shipmentType, warehouse, tatStatus, movementType, dateFrom, dateTo, sortBy = 'shipmentDate', sortOrder = -1 } = req.query;
     const match = {};
     if (search) {
       match.$or = [
@@ -27,6 +27,11 @@ router.get('/', auth, async (req, res) => {
     if (destCode) match.destCode = destCode;
     if (month) match.month = month;
     if (logisticsType) match.logisticsType = logisticsType;
+    if (shipmentType) match.shipmentType = { $regex: shipmentType, $options: 'i' };
+    if (warehouse) match.warehouse = warehouse;
+    if (movementType) match.movementType = movementType;
+    if (tatStatus === 'Delayed') match['trackingStatus.isDelayed'] = true;
+    if (tatStatus === 'On-time') match['trackingStatus.isDelayed'] = { $ne: true };
     if (dateFrom || dateTo) {
       match.shipmentDate = {};
       if (dateFrom) match.shipmentDate.$gte = new Date(dateFrom);
