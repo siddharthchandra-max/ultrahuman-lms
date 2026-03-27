@@ -66,11 +66,14 @@ async function fetchMetabaseData() {
   return response.data;
 }
 
-// Determine warehouse — only BLR if destination is India (source is always India)
-function detectWarehouse(destCountry) {
-  if (!destCountry) return null;
-  const c = destCountry.trim().toLowerCase();
-  if (c === 'india' || c === 'in') return 'BLR';
+// Determine warehouse — BLR if source or destination is India
+function detectWarehouse(sourceCountry, destCountry) {
+  const isIndia = (c) => {
+    if (!c) return false;
+    const v = c.trim().toLowerCase();
+    return v === 'india' || v === 'in';
+  };
+  if (isIndia(sourceCountry) || isIndia(destCountry)) return 'BLR';
   return null;
 }
 
@@ -79,7 +82,7 @@ function mapRowToShipment(row) {
   const trackingUrl = row.RING_TRACKING_URL_TO || '';
   const awb = extractAWB(trackingUrl);
   const courier = detectCourier(trackingUrl);
-  const warehouse = detectWarehouse(row.COUNTRY);
+  const warehouse = detectWarehouse('IN', row.COUNTRY);
 
   return {
     awb: awb || '',
