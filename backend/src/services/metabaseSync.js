@@ -66,24 +66,12 @@ async function fetchMetabaseData() {
   return response.data;
 }
 
-// Determine warehouse based on source and destination country
+// Determine warehouse — only BLR if destination is India (source is always India)
 function detectWarehouse(destCountry) {
-  if (!destCountry) return 'ROW';
+  if (!destCountry) return null;
   const c = destCountry.trim().toLowerCase();
-  // India to India = BLR
   if (c === 'india' || c === 'in') return 'BLR';
-  // US/Canada
-  if (c === 'united states' || c === 'us' || c === 'usa' || c === 'canada' || c === 'ca') return 'USA';
-  // UK
-  if (c === 'united kingdom' || c === 'uk' || c === 'gb' || c === 'great britain') return 'UK';
-  // Netherlands / Europe hub
-  if (c === 'netherlands' || c === 'nl' || c === 'germany' || c === 'de' || c === 'france' || c === 'fr' ||
-      c === 'spain' || c === 'es' || c === 'italy' || c === 'it' || c === 'belgium' || c === 'be' ||
-      c === 'austria' || c === 'at' || c === 'switzerland' || c === 'ch' || c === 'sweden' || c === 'se' ||
-      c === 'denmark' || c === 'dk' || c === 'norway' || c === 'no' || c === 'finland' || c === 'fi' ||
-      c === 'portugal' || c === 'pt' || c === 'ireland' || c === 'ie' || c === 'poland' || c === 'pl') return 'NL';
-  // Rest of world
-  return 'ROW';
+  return null;
 }
 
 // Map Metabase row to Shipment fields
