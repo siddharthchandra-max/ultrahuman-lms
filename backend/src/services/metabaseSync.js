@@ -66,11 +66,32 @@ async function fetchMetabaseData() {
   return response.data;
 }
 
+// Determine warehouse based on source and destination country
+function detectWarehouse(destCountry) {
+  if (!destCountry) return 'ROW';
+  const c = destCountry.trim().toLowerCase();
+  // India to India = BLR
+  if (c === 'india' || c === 'in') return 'BLR';
+  // US/Canada
+  if (c === 'united states' || c === 'us' || c === 'usa' || c === 'canada' || c === 'ca') return 'USA';
+  // UK
+  if (c === 'united kingdom' || c === 'uk' || c === 'gb' || c === 'great britain') return 'UK';
+  // Netherlands / Europe hub
+  if (c === 'netherlands' || c === 'nl' || c === 'germany' || c === 'de' || c === 'france' || c === 'fr' ||
+      c === 'spain' || c === 'es' || c === 'italy' || c === 'it' || c === 'belgium' || c === 'be' ||
+      c === 'austria' || c === 'at' || c === 'switzerland' || c === 'ch' || c === 'sweden' || c === 'se' ||
+      c === 'denmark' || c === 'dk' || c === 'norway' || c === 'no' || c === 'finland' || c === 'fi' ||
+      c === 'portugal' || c === 'pt' || c === 'ireland' || c === 'ie' || c === 'poland' || c === 'pl') return 'NL';
+  // Rest of world
+  return 'ROW';
+}
+
 // Map Metabase row to Shipment fields
 function mapRowToShipment(row) {
   const trackingUrl = row.RING_TRACKING_URL_TO || '';
   const awb = extractAWB(trackingUrl);
   const courier = detectCourier(trackingUrl);
+  const warehouse = detectWarehouse(row.COUNTRY);
 
   return {
     awb: awb || '',
@@ -106,6 +127,7 @@ function mapRowToShipment(row) {
     billingCountry: row.billing_country_code || '',
     omsStatus: row.STATUS_TO || '',
     shipmentType: row.SHIPMENT_TYPE || 'b2c',
+    warehouse,
     senderName: 'Ultrahuman',
     sourceCountry: 'IN',
   };
@@ -195,6 +217,7 @@ async function syncFromMetabase(sinceDate = '2026-03-01') {
                   billingZip: mapped.billingZip,
                   billingCountry: mapped.billingCountry,
                   omsStatus: mapped.omsStatus,
+                  warehouse: mapped.warehouse,
                   omsSyncedAt: new Date(),
                 },
               },
