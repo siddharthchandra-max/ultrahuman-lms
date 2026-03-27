@@ -103,15 +103,15 @@ export default function Tracking() {
       'Unknown': { bg: '#f3f4f6', color: '#6b7280', label: 'PENDING' },
     };
     const m = map[s] || map['Unknown'];
-    return <span style={{ padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, background: m.bg, color: m.color, whiteSpace: 'nowrap' }}>{m.label}</span>;
+    return <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, background: m.bg, color: m.color, whiteSpace: 'nowrap' }}>{m.label}</span>;
   };
 
   const tatBadge = () => (
-    <span style={{ padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: '#fff3cd', color: '#856404' }}>PENDING</span>
+    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 600, background: '#fff3cd', color: '#856404' }}>PENDING</span>
   );
 
   const naBadge = () => (
-    <span style={{ padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: '#fee2e2', color: '#991b1b' }}>NA</span>
+    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 600, background: '#f3f4f6', color: '#6b7280' }}>NA</span>
   );
 
   const calcTAT = (s) => {
@@ -347,8 +347,8 @@ export default function Tracking() {
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <div className="table-wrap" style={{ height: '100%', overflowY: 'auto', overflowX: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'hidden', padding: '12px 16px 0' }}>
+        <div className="table-wrap" style={{ height: '100%', overflowY: 'auto', overflowX: 'auto', background: '#fff', borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #e5e8ed' }}>
           <table className="tracking-table">
             <thead>
               <tr>
@@ -425,12 +425,12 @@ export default function Tracking() {
       </div>
 
       {/* Pagination */}
-      <div className="pagination" style={{ padding: '8px 16px' }}>
-        <span>Showing {((pagination.page - 1) * 50) + 1}–{Math.min(pagination.page * 50, pagination.total)} of {pagination.total.toLocaleString()}</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => fetch(pagination.page - 1)} disabled={pagination.page <= 1}>Previous</button>
-          <span style={{ padding: '6px 12px', fontSize: 13 }}>Page {pagination.page} / {pagination.pages}</span>
-          <button className="btn btn-secondary btn-sm" onClick={() => fetch(pagination.page + 1)} disabled={pagination.page >= pagination.pages}>Next</button>
+      <div className="tracking-pagination">
+        <span className="tracking-pagination-info">Showing {((pagination.page - 1) * 50) + 1}–{Math.min(pagination.page * 50, pagination.total)} of {pagination.total.toLocaleString()}</span>
+        <div className="tracking-pagination-controls">
+          <button className="tracking-page-btn" onClick={() => fetch(pagination.page - 1)} disabled={pagination.page <= 1}>← Prev</button>
+          <span className="tracking-page-num">Page {pagination.page} of {pagination.pages}</span>
+          <button className="tracking-page-btn" onClick={() => fetch(pagination.page + 1)} disabled={pagination.page >= pagination.pages}>Next →</button>
         </div>
       </div>
     </div>

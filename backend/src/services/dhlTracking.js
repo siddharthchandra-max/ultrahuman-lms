@@ -5,6 +5,9 @@ const DHL_API_URL = process.env.DHL_API_URL || 'https://xmlpi-ea.dhl.com/XMLShip
 const DHL_SITE_ID = process.env.DHL_SITE_ID;
 const DHL_PASSWORD = process.env.DHL_PASSWORD;
 
+// DHL Unified Tracking API (REST)
+const DHL_UNIFIED_API_KEY = process.env.DHL_UNIFIED_API_KEY;
+
 // Event code → milestone mapping based on DHL Express event codes
 const EVENT_CODE_MAP = {
   'PU': 'Picked Up',
@@ -189,14 +192,74 @@ function parseXMLResponse(xml) {
   return results;
 }
 
+// DHL Unified Tracking API (REST - simpler than XML PI)
+async function trackViaUnifiedAPI(awb) {
+  if (!DHL_UNIFIED_API_KEY) return null;
+
+  try {
+    const response = await axios.get(`https://api-eu.dhl.com/track/shipments`, {
+      params: { trackingNumber: awb },
+      headers: { 'DHL-API-Key': DHL_UNIFIED_API_KEY },
+      timeout: 15000,
+    });
+
+    const shipments = response.data?.shipments;
+    if (!shipments || shipments.length === 0) return null;
+
+    const s = shipments[0];
+    const events = (s.events || []).map(e => {
+      const code = e.statusCode || '';
+      return {
+        timestamp: e.timestamp ? new Date(e.timestamp) : null,
+        location: e.location?.address?.addressLocality || '',
+        locationCode: e.location?.address?.countryCode || '',
+        statusCode: code,
+        description: e.description || e.status || '',
+        milestone: mapEventCodeToMilestone(code),
+        remarks: e.remark || '',
+      };
+    }).filter(e => e.timestamp);
+
+    events.sort((a, b) => b.timestamp - a.timestamp);
+
+    return {
+      events,
+      error: null,
+      shipmentDate: s.details?.proofOfDeliverySignedAt ? new Date(s.details.proofOfDeliverySignedAt) : null,
+      pieces: s.details?.totalNumberOfPieces || null,
+      weight: s.details?.weight?.value || null,
+      weightUnit: s.details?.weight?.unitText || null,
+      description: s.details?.description || null,
+      origin: s.origin ? { code: s.origin.address?.countryCode, description: s.origin.address?.addressLocality } : null,
+      destination: s.destination ? { code: s.destination.address?.countryCode, description: s.destination.address?.addressLocality } : null,
+      shipperRef: s.details?.references?.[0]?.number || null,
+      originCountry: s.origin?.address?.countryCode || null,
+      destCountry: s.destination?.address?.countryCode || null,
+      estimatedDelivery: s.estimatedTimeOfDelivery ? new Date(s.estimatedTimeOfDelivery) : null,
+    };
+  } catch (err) {
+    if (err.response?.status === 404) return null; // Not found, try XML PI
+    console.error(`[DHL Unified] Track ${awb} error:`, err.response?.data?.detail || err.message);
+    return null;
+  }
+}
+
 async function trackSingleAWB(awb) {
+  // Try Unified Tracking API first (REST, simpler, includes estimated delivery)
+  const unifiedResult = await trackViaUnifiedAPI(awb);
+  if (unifiedResult && unifiedResult.events.length > 0) {
+    console.log(`[DHL Unified] AWB ${awb}: ${unifiedResult.events.length} events`);
+    return { awb, ...unifiedResult };
+  }
+
+  // Fall back to XML PI
   if (!DHL_SITE_ID || !DHL_PASSWORD) {
     return { awb, events: [], error: 'DHL credentials not configured (DHL_SITE_ID / DHL_PASSWORD)' };
   }
 
   try {
     const xmlBody = buildTrackingXML(awb);
-    console.log(`[DHL] Tracking AWB: ${awb}`);
+    console.log(`[DHL XML PI] Tracking AWB: ${awb}`);
 
     const response = await axios.post(DHL_API_URL, xmlBody, {
       headers: { 'Content-Type': 'application/xml' },
@@ -229,23 +292,39 @@ async function trackSingleAWB(awb) {
 async function trackBatchAWBs(awbs) {
   const results = {};
 
+  // Try Unified API first for all AWBs (parallel, respects rate limits)
+  const remaining = [];
+  const unifiedPromises = awbs.map(async (awb) => {
+    const result = await trackViaUnifiedAPI(awb);
+    if (result && result.events.length > 0) {
+      results[awb] = result;
+      console.log(`[DHL Unified] AWB ${awb}: ${result.events.length} events`);
+    } else {
+      remaining.push(awb);
+    }
+  });
+  await Promise.all(unifiedPromises);
+
+  if (remaining.length === 0) return results;
+
+  // Fall back to XML PI for AWBs not found via Unified API
   if (!DHL_SITE_ID || !DHL_PASSWORD) {
-    for (const awb of awbs) {
-      results[awb] = { events: [], error: 'DHL credentials not configured' };
+    for (const awb of remaining) {
+      if (!results[awb]) results[awb] = { events: [], error: 'DHL credentials not configured' };
     }
     return results;
   }
 
   // DHL allows up to 10 AWBs per request
   const chunks = [];
-  for (let i = 0; i < awbs.length; i += 10) {
-    chunks.push(awbs.slice(i, i + 10));
+  for (let i = 0; i < remaining.length; i += 10) {
+    chunks.push(remaining.slice(i, i + 10));
   }
 
   for (const chunk of chunks) {
     try {
       const xmlBody = buildTrackingXML(chunk);
-      console.log(`[DHL] Batch tracking ${chunk.length} AWBs: ${chunk.join(', ')}`);
+      console.log(`[DHL XML PI] Batch tracking ${chunk.length} AWBs: ${chunk.join(', ')}`);
 
       const response = await axios.post(DHL_API_URL, xmlBody, {
         headers: { 'Content-Type': 'application/xml' },
@@ -327,4 +406,4 @@ function computeTrackingStatus(events, shipmentDate, estimatedDelivery, dispatch
   return status;
 }
 
-module.exports = { trackSingleAWB, trackBatchAWBs, computeTrackingStatus, mapEventCodeToMilestone };
+module.exports = { trackSingleAWB, trackBatchAWBs, trackViaUnifiedAPI, computeTrackingStatus, mapEventCodeToMilestone };

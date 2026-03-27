@@ -305,4 +305,95 @@ router.get('/debug/ups/:awb', async (req, res) => {
   }
 });
 
+// Sync UPS shipments (Quantum View / Shipping History)
+router.post('/ups-sync', auth, async (req, res) => {
+  try {
+    const { fetchUPSShipments } = require('../services/upsQuantumView');
+    const fromDate = req.body.fromDate || null;
+    const result = await fetchUPSShipments(fromDate);
+    res.json(result);
+  } catch (err) {
+    console.error('[UPS Sync] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Import UPS AWBs — create shipments + auto-track
+router.post('/ups-import', auth, async (req, res) => {
+  try {
+    const { awbs } = req.body;
+    if (!awbs || !Array.isArray(awbs) || awbs.length === 0) {
+      return res.status(400).json({ error: 'Provide awbs array' });
+    }
+
+    let imported = 0;
+    const now = new Date();
+
+    // Create shipments for AWBs that don't exist
+    for (const awb of awbs) {
+      const existing = await Shipment.findOne({ awb });
+      if (!existing) {
+        await Shipment.create({
+          awb,
+          courier: 'UPS',
+          status: 'Booked',
+          uploadDate: now,
+          logisticsType: 'Cross Border',
+        });
+        imported++;
+      }
+    }
+
+    // Send response immediately, track in background
+    res.json({ imported, tracked: 0, total: awbs.length, message: 'Tracking in background...' });
+
+    // Background: track all AWBs and enrich shipment data
+    const { computeTrackingStatus } = require('../services/dhlTracking');
+    upsTrackBatch(awbs).then(async (results) => {
+      let tracked = 0;
+      for (const [awb, data] of Object.entries(results)) {
+        if (!data.events || data.events.length === 0) continue;
+        const shipment = await Shipment.findOne({ awb });
+        if (!shipment) continue;
+
+        shipment.trackingEvents = data.events;
+        const ts = computeTrackingStatus(data.events, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
+        shipment.trackingStatus = ts;
+        shipment.status = ts.currentMilestone;
+
+        if (data.estimatedDelivery) shipment.edd = data.estimatedDelivery;
+        if (data.destCountry && (!shipment.destCode || shipment.destCode === '-')) shipment.destCode = data.destCountry;
+        if (data.originCountry && (!shipment.sourceCountry || shipment.sourceCountry === '-')) shipment.sourceCountry = data.originCountry;
+        if (data.origin?.description && (!shipment.sourceCity || shipment.sourceCity === '-')) shipment.sourceCity = data.origin.description;
+        if (data.destination?.description && (!shipment.destCity || shipment.destCity === '-')) shipment.destCity = data.destination.description;
+        if (data.weight && !shipment.weight) shipment.weight = data.weight;
+
+        // Dispatch date + week from pickup event
+        const pickupEvent = data.events.filter(e => e.statusCode === 'PU' || e.statusCode === 'DP')
+          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+        if (pickupEvent) {
+          shipment.dispatchDate = new Date(pickupEvent.timestamp);
+          shipment.shipmentDate = shipment.shipmentDate || shipment.dispatchDate;
+          const startOfYear = new Date(shipment.dispatchDate.getFullYear(), 0, 1);
+          shipment.week = 'W' + Math.ceil(((shipment.dispatchDate - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+        }
+
+        // Derive month
+        const dateForMonth = shipment.shipmentDate || shipment.dispatchDate;
+        if (dateForMonth) {
+          shipment.month = new Date(dateForMonth).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+        }
+
+        await shipment.save();
+        tracked++;
+      }
+      console.log(`[UPS Import] Tracked ${tracked}/${awbs.length} AWBs`);
+    }).catch(err => console.error('[UPS Import] Background tracking error:', err.message));
+
+  } catch (err) {
+    console.error('[UPS Import] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

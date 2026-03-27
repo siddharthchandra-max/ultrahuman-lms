@@ -90,6 +90,20 @@ function start() {
   });
 
   console.log('Tracking refresh cron scheduled (every 10 min)');
+
+  // UPS Quantum View sync — every 30 minutes
+  cron.schedule('*/30 * * * *', async () => {
+    console.log('[Cron] Running UPS shipment sync...');
+    try {
+      const { fetchUPSShipments } = require('../services/upsQuantumView');
+      const result = await fetchUPSShipments();
+      console.log(`[Cron] UPS sync: ${result.imported} imported, ${result.updated} updated`);
+    } catch (err) {
+      console.error('[Cron] UPS sync error:', err.message);
+    }
+  });
+
+  console.log('UPS shipment sync cron scheduled (every 30 min)');
 }
 
 module.exports = { start };
