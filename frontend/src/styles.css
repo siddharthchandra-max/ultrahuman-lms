@@ -1583,6 +1583,9 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   font-weight: 500;
   word-break: break-word;
 }
+.sd-courier-value { font-weight: 700; color: #c00; font-size: 13px; }
+[data-theme="night"] .sd-courier-value { color: #f85149; }
+[data-theme="eye-care"] .sd-courier-value { color: #a0522d; }
 
 /* Invoice Table */
 .sd-invoice-table {
@@ -1751,6 +1754,71 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   z-index: 10;
 }
 .sd-actions-btn:hover { background: #2a2a4e; }
+
+/* Night — Shipment Detail */
+[data-theme="night"] .shipment-detail-page { background: #0d1117; }
+[data-theme="night"] .sd-breadcrumb { color: #484f58; }
+[data-theme="night"] .sd-breadcrumb span:first-child { color: #58a6ff; }
+[data-theme="night"] .sd-header { background: #0d1117; border-color: #21262d; }
+[data-theme="night"] .sd-back { color: #e6edf3; }
+[data-theme="night"] .sd-back svg { color: #8b949e; }
+[data-theme="night"] .sd-back:hover svg { color: #e6edf3; }
+[data-theme="night"] .sd-section { background: #161b22; border-color: #21262d; }
+[data-theme="night"] .sd-section-header h3 { color: #e6edf3; }
+[data-theme="night"] .sd-section-header svg { color: #484f58; }
+[data-theme="night"] .sd-grid { border-color: #21262d; }
+[data-theme="night"] .sd-field { border-color: #21262d; }
+[data-theme="night"] .sd-field label { color: #8b949e; }
+[data-theme="night"] .sd-field span { color: #c9d1d9; }
+[data-theme="night"] .sd-invoice-table { border-color: #21262d; }
+[data-theme="night"] .sd-invoice-table th { background: #0d1117; color: #8b949e; border-color: #21262d; }
+[data-theme="night"] .sd-invoice-table td { color: #c9d1d9; border-color: #21262d; }
+[data-theme="night"] .sd-tracking-card { background: #161b22; border-color: #21262d; }
+[data-theme="night"] .sd-edd span { color: #8b949e; }
+[data-theme="night"] .sd-edd strong { color: #e6edf3; }
+[data-theme="night"] .sd-timeline-dot { background: #21262d; border-color: #30363d; }
+[data-theme="night"] .sd-timeline-line { background: #30363d; }
+[data-theme="night"] .sd-timeline-title { color: #8b949e; }
+[data-theme="night"] .sd-timeline-item.completed .sd-timeline-title { color: #e6edf3; }
+[data-theme="night"] .sd-timeline-event-desc { color: #c9d1d9; }
+[data-theme="night"] .sd-timeline-event-loc { color: #8b949e; }
+[data-theme="night"] .sd-timeline-event-time { color: #484f58; }
+[data-theme="night"] .sd-actions-btn { background: #238636; }
+[data-theme="night"] .sd-actions-btn:hover { background: #2ea043; }
+[data-theme="night"] .sd-pending-badge { background: #3d2e00; color: #e3b341; }
+[data-theme="night"] .sd-pending-badge.delivered { background: #0d3321; color: #3fb950; }
+[data-theme="night"] .sd-pending-badge.failed { background: #3d0c0c; color: #f85149; }
+[data-theme="night"] .sd-status-label { color: #d29922; }
+[data-theme="night"] .sd-status-label.delivered { color: #3fb950; }
+[data-theme="night"] .sd-status-label.failed { color: #f85149; }
+
+/* Eye Care — Shipment Detail */
+[data-theme="eye-care"] .shipment-detail-page { background: #f5efe5; }
+[data-theme="eye-care"] .sd-breadcrumb { color: #a69882; }
+[data-theme="eye-care"] .sd-breadcrumb span:first-child { color: #8b7355; }
+[data-theme="eye-care"] .sd-header { background: #f5efe5; border-color: #ddd4c4; }
+[data-theme="eye-care"] .sd-back { color: #3e3529; }
+[data-theme="eye-care"] .sd-back svg { color: #a69882; }
+[data-theme="eye-care"] .sd-section { background: #faf6f0; border-color: #ddd4c4; }
+[data-theme="eye-care"] .sd-section-header h3 { color: #3e3529; }
+[data-theme="eye-care"] .sd-grid { border-color: #ddd4c4; }
+[data-theme="eye-care"] .sd-field { border-color: #e8dfd2; }
+[data-theme="eye-care"] .sd-field label { color: #7d7264; }
+[data-theme="eye-care"] .sd-field span { color: #3e3529; }
+[data-theme="eye-care"] .sd-invoice-table th { background: #ede6d8; color: #7d7264; border-color: #ddd4c4; }
+[data-theme="eye-care"] .sd-invoice-table td { color: #3e3529; border-color: #e8dfd2; }
+[data-theme="eye-care"] .sd-tracking-card { background: #faf6f0; border-color: #ddd4c4; }
+[data-theme="eye-care"] .sd-edd span { color: #a69882; }
+[data-theme="eye-care"] .sd-edd strong { color: #3e3529; }
+[data-theme="eye-care"] .sd-timeline-dot { background: #e8dfd2; border-color: #d4c9b8; }
+[data-theme="eye-care"] .sd-timeline-line { background: #d4c9b8; }
+[data-theme="eye-care"] .sd-timeline-title { color: #a69882; }
+[data-theme="eye-care"] .sd-timeline-item.completed .sd-timeline-title { color: #3e3529; }
+[data-theme="eye-care"] .sd-timeline-event-desc { color: #5c5347; }
+[data-theme="eye-care"] .sd-timeline-event-loc { color: #7d7264; }
+[data-theme="eye-care"] .sd-timeline-event-time { color: #a69882; }
+[data-theme="eye-care"] .sd-actions-btn { background: #8b7355; }
+[data-theme="eye-care"] .sd-actions-btn:hover { background: #7a6348; }
 
 @media (max-width: 900px) {
   .sd-content { flex-direction: column; }

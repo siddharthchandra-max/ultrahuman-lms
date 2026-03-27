@@ -122,7 +122,7 @@ export default function ShipmentDetail() {
             {generalOpen && (
               <div className="sd-grid">
                 <div className="sd-field"><label>AWB No.</label><span>{s.awb}</span></div>
-                <div className="sd-field"><label>Shipping Partner</label><span style={{ fontWeight: 700, color: '#c00', fontSize: 13 }}>{s.courier || 'DHL'}</span></div>
+                <div className="sd-field"><label>Shipping Partner</label><span className="sd-courier-value">{s.courier || 'DHL'}</span></div>
 
                 <div className="sd-field"><label>Booked Date</label><span>{formatDate(s.shipmentDate)}</span></div>
                 <div className="sd-field"><label>Dispatch Date</label><span>{s.dispatchDate ? formatDate(s.dispatchDate) : '-'}</span></div>
