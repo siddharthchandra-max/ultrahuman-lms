@@ -19,7 +19,7 @@ function start() {
           { 'trackingStatus.lastTrackedAt': { $lt: tenMinAgo } },
           { 'trackingStatus.lastTrackedAt': { $exists: false } },
         ],
-      }).select('awb courier shipmentDate dispatchDate trackingEvents trackingStatus').limit(200);
+      }).select('awb courier shipmentDate dispatchDate trackingEvents trackingStatus').limit(500);
 
       if (active.length === 0) {
         console.log('[Cron] No shipments need refresh');
@@ -27,7 +27,11 @@ function start() {
       }
 
       // Group by courier
-      const dhlAwbs = active.filter(s => !s.courier || s.courier.toLowerCase().includes('dhl')).map(s => s.awb);
+      // DHL Unified API can track: DHL, BlueDart, FedEx (DHL Unified covers multiple carriers)
+      const dhlAwbs = active.filter(s => {
+        const c = (s.courier || '').toLowerCase();
+        return c.includes('dhl') || c.includes('bluedart') || c.includes('fedex') || !c;
+      }).map(s => s.awb);
       const upsAwbs = active.filter(s => s.courier && s.courier.toLowerCase().includes('ups')).map(s => s.awb);
 
       const updateShipments = async (results) => {
@@ -69,9 +73,9 @@ function start() {
 
       let totalUpdated = 0;
 
-      // Track DHL
+      // Track DHL/BlueDart/FedEx via DHL Unified API
       if (dhlAwbs.length > 0) {
-        console.log(`[Cron] Tracking ${dhlAwbs.length} DHL shipments...`);
+        console.log(`[Cron] Tracking ${dhlAwbs.length} DHL/BlueDart/FedEx shipments...`);
         const results = await dhlTrackBatch(dhlAwbs);
         totalUpdated += await updateShipments(results);
       }
