@@ -11,7 +11,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 // GET /api/shipments — paginated list
 router.get('/', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 50, search, product, destCode, month, status, logisticsType, sortBy = 'shipmentDate', sortOrder = -1 } = req.query;
+    const { page = 1, limit = 50, search, product, courier, destCode, month, status, logisticsType, dateFrom, dateTo, sortBy = 'shipmentDate', sortOrder = -1 } = req.query;
     const match = {};
     if (search) {
       match.$or = [
@@ -19,12 +19,19 @@ router.get('/', auth, async (req, res) => {
         { invoiceNumber: { $regex: search, $options: 'i' } },
         { shipmentNumber: { $regex: search, $options: 'i' } },
         { receiverName: { $regex: search, $options: 'i' } },
+        { uhrId: { $regex: search, $options: 'i' } },
       ];
     }
     if (product) match.productName = product;
+    if (courier) match.courier = courier;
     if (destCode) match.destCode = destCode;
     if (month) match.month = month;
     if (logisticsType) match.logisticsType = logisticsType;
+    if (dateFrom || dateTo) {
+      match.shipmentDate = {};
+      if (dateFrom) match.shipmentDate.$gte = new Date(dateFrom);
+      if (dateTo) match.shipmentDate.$lte = new Date(dateTo + 'T23:59:59.999Z');
+    }
     if (status) {
       if (status.includes(',')) {
         match.status = { $in: status.split(',').map(s => s.trim()) };

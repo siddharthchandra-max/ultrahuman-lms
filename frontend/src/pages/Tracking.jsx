@@ -68,6 +68,7 @@ export default function Tracking() {
       if (filters.warehouse) params.warehouse = filters.warehouse;
       if (filters.destCode) params.destCode = filters.destCode;
       if (filters.product) params.product = filters.product;
+      if (filters.courier) params.courier = filters.courier;
       if (filters.logisticsType) params.logisticsType = filters.logisticsType;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
@@ -302,10 +303,13 @@ export default function Tracking() {
 
       {/* Filters */}
       <div className="tracking-filters">
-        <select className="filter-select" value={filters.product || ''} onChange={e => setFilters(f => ({ ...f, product: e.target.value || undefined }))}>
+        <select className="filter-select" value={filters.courier || ''} onChange={e => setFilters(f => ({ ...f, courier: e.target.value || undefined }))}>
           <option value="">Shipping Partner</option>
-          <option>DHL</option>
           <option>UPS</option>
+          <option>DHL</option>
+          <option>Swiship</option>
+          <option>BlueDart</option>
+          <option>FedEx</option>
         </select>
         <select className="filter-select" value={filters.warehouse || ''} onChange={e => setFilters(f => ({ ...f, warehouse: e.target.value || undefined }))}>
           <option value="">Warehouse</option>
