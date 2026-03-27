@@ -1038,8 +1038,10 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   border-bottom: 1px solid rgba(0,0,0,0.06); flex-wrap: wrap;
 }
 .tracking-filters .filter-select {
-  background: #f7f8fa; border-color: #e0e3e8; border-radius: 8px;
+  background-color: #f7f8fa; border-color: #e0e3e8; border-radius: 8px;
   font-size: 12px; padding: 7px 32px 7px 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
 }
 .tracking-filters .filter-select:hover { border-color: #c5c9d2; }
 
