@@ -396,4 +396,36 @@ router.post('/ups-import', auth, async (req, res) => {
   }
 });
 
+// Metabase OMS sync — import shipments from Metabase
+router.post('/metabase-sync', auth, async (req, res) => {
+  try {
+    const { syncFromMetabase } = require('../services/metabaseSync');
+    const sinceDate = req.body.sinceDate || '2026-03-01';
+    res.json({ message: `Metabase sync started (since ${sinceDate})` });
+
+    // Run in background
+    syncFromMetabase(sinceDate).then(result => {
+      console.log('[Metabase Sync] Done:', result);
+    }).catch(err => {
+      console.error('[Metabase Sync] Error:', err.message);
+    });
+  } catch (err) {
+    console.error('[Metabase Sync] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Metabase sync status — get last sync info
+router.get('/metabase-sync/status', auth, async (req, res) => {
+  try {
+    const total = await Shipment.countDocuments({ uhrId: { $exists: true, $ne: '' } });
+    const lastSynced = await Shipment.findOne({ omsSyncedAt: { $exists: true } })
+      .sort({ omsSyncedAt: -1 })
+      .select('omsSyncedAt');
+    res.json({ totalOmsShipments: total, lastSyncedAt: lastSynced?.omsSyncedAt || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

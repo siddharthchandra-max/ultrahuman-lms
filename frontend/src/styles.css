@@ -892,6 +892,18 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   white-space: nowrap; transition: all 0.2s; box-shadow: 0 2px 6px rgba(26,35,126,0.2);
 }
 .btn-bulk-mgmt:hover { background: var(--navy-light); box-shadow: 0 4px 12px rgba(26,35,126,0.25); transform: translateY(-1px); }
+.btn-oms-sync {
+  display: flex; align-items: center; gap: 8px; padding: 8px 20px;
+  background: #0d6efd; color: #fff; border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s; box-shadow: 0 2px 6px rgba(13,110,253,0.2);
+}
+.btn-oms-sync:hover { background: #0b5ed7; box-shadow: 0 4px 12px rgba(13,110,253,0.25); transform: translateY(-1px); }
+.btn-oms-sync:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.oms-sync-status {
+  font-size: 12px; color: #0d6efd; padding: 6px 12px; background: #e8f0fe;
+  border-radius: 6px; margin-top: 4px; text-align: right;
+}
 /* Bulk Management Modal */
 .bulk-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;

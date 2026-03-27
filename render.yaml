@@ -30,6 +30,12 @@ services:
         sync: false
       - key: UPS_ACCOUNT
         sync: false
+      - key: METABASE_URL
+        value: https://metabase.ultrahuman.com
+      - key: METABASE_SESSION
+        sync: false
+      - key: METABASE_QUESTION_ID
+        value: "19100"
 
   - type: web
     name: uh-lms-frontend

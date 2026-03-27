@@ -38,6 +38,8 @@ export default function Tracking() {
   const [colSort, setColSort] = useState({ col: null, dir: null }); // dir: 'asc' | 'desc'
   const [openColFilter, setOpenColFilter] = useState(null);
   const colFilterRef = useRef(null);
+  const [omsSyncing, setOmsSyncing] = useState(false);
+  const [omsSyncResult, setOmsSyncResult] = useState(null);
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
@@ -276,10 +278,25 @@ export default function Tracking() {
             />
           )}
         </div>
-        <button className="btn-bulk-mgmt" onClick={() => setShowBulk(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          Bulk Management
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn-oms-sync" disabled={omsSyncing} onClick={async () => {
+            setOmsSyncing(true); setOmsSyncResult(null);
+            try {
+              await api.post('/tracking/metabase-sync');
+              setOmsSyncResult('Sync started — importing shipments from OMS...');
+              setTimeout(() => { fetch(1); setOmsSyncResult(null); }, 15000);
+            } catch (err) { setOmsSyncResult('Sync failed: ' + (err.response?.data?.error || err.message)); }
+            setOmsSyncing(false);
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            {omsSyncing ? 'Syncing...' : 'Sync OMS'}
+          </button>
+          <button className="btn-bulk-mgmt" onClick={() => setShowBulk(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Bulk Management
+          </button>
+        </div>
+        {omsSyncResult && <div className="oms-sync-status">{omsSyncResult}</div>}
         {showBulk && <BulkManagement onClose={() => setShowBulk(false)} onUploadSuccess={() => fetch(1)} />}
       </div>
 
