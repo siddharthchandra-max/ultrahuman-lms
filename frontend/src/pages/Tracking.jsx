@@ -315,9 +315,11 @@ export default function Tracking() {
         </select>
         <select className="filter-select" value={filters.warehouse || ''} onChange={e => setFilters(f => ({ ...f, warehouse: e.target.value || undefined }))}>
           <option value="">Warehouse</option>
-          <option>Mumbai</option>
-          <option>Delhi</option>
-          <option>Bangalore</option>
+          <option>BLR</option>
+          <option>UK</option>
+          <option>USA</option>
+          <option>NL</option>
+          <option>ROW</option>
         </select>
         <select className="filter-select" value={filters.shipmentType || ''} onChange={e => setFilters(f => ({ ...f, shipmentType: e.target.value || undefined }))}>
           <option value="">Shipment Type</option>
