@@ -382,8 +382,8 @@ export default function Tracking() {
               ) : filteredShipments.map((s, i) => (
                 <tr key={s._id || i}>
                   <td><input type="checkbox" /></td>
-                  <td style={{ fontWeight: 700, color: '#000', fontSize: 12, cursor: 'pointer' }} onClick={() => navigate(`/tracking/${s.awb}`)}>{s.awb}</td>
-                  <td style={{ fontWeight: 700, color: '#000', fontSize: 11 }}>{s.courier || 'DHL'}</td>
+                  <td className="td-awb" onClick={() => navigate(`/tracking/${s.awb}`)}>{s.awb}</td>
+                  <td className="td-courier">{s.courier || 'DHL'}</td>
                   <td>{s.shipmentDate ? formatDate(s.shipmentDate) : '-'}</td>
                   <td>{s.dispatchDate ? formatDate(s.dispatchDate) : '-'}</td>
                   <td>{getWeek(s)}</td>

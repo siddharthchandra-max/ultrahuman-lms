@@ -1356,6 +1356,13 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .tracking-table tbody tr:nth-child(even):hover td {
   background: #f5f7ff;
 }
+.tracking-table .td-awb { font-weight: 700; color: #000; font-size: 12px; cursor: pointer; }
+.tracking-table .td-awb:hover { text-decoration: underline; }
+.tracking-table .td-courier { font-weight: 700; color: #000; font-size: 11px; }
+[data-theme="night"] .tracking-table .td-awb { color: #58a6ff; }
+[data-theme="night"] .tracking-table .td-courier { color: #e6edf3; }
+[data-theme="eye-care"] .tracking-table .td-awb { color: #5c4a2e; }
+[data-theme="eye-care"] .tracking-table .td-courier { color: #3e3529; }
 .tracking-table input[type="checkbox"] {
   width: 15px; height: 15px; accent-color: var(--navy); cursor: pointer;
   border-radius: 3px;
