@@ -21,24 +21,16 @@ function start() {
         ],
       };
 
-      // Fetch DHL/BlueDart/FedEx and UPS separately with their own limits
-      const [dhlShipments, upsShipments] = await Promise.all([
-        Shipment.find({
-          ...baseQuery,
-          $expr: {
-            $or: [
-              { $eq: [{ $type: '$courier' }, 'missing'] },
-              { $eq: ['$courier', ''] },
-              { $eq: ['$courier', null] },
-              { $regexMatch: { input: { $toLower: '$courier' }, regex: /dhl|bluedart|fedex/ } },
-            ],
-          },
-        }).select('awb courier shipmentDate dispatchDate trackingEvents trackingStatus').limit(300),
-        Shipment.find({
-          ...baseQuery,
-          courier: { $regex: /ups/i },
-        }).select('awb courier shipmentDate dispatchDate trackingEvents trackingStatus').limit(200),
-      ]);
+      // Fetch all active shipments — no limit, process everything each cycle
+      const active = await Shipment.find(baseQuery)
+        .select('awb courier shipmentDate dispatchDate trackingEvents trackingStatus');
+
+      // Group by courier
+      const dhlShipments = active.filter(s => {
+        const c = (s.courier || '').toLowerCase();
+        return c.includes('dhl') || c.includes('bluedart') || c.includes('fedex') || !c;
+      });
+      const upsShipments = active.filter(s => s.courier && s.courier.toLowerCase().includes('ups'));
 
       const totalActive = dhlShipments.length + upsShipments.length;
       if (totalActive === 0) {
