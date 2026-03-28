@@ -514,12 +514,13 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 
 /* ====== LOGIN ====== */
 .login-page {
-  display: flex; min-height: 100vh; background: #000;
+  position: relative; min-height: 100vh; background: #000;
+  display: flex; align-items: center; justify-content: center;
 }
 
-/* Left hero — pure black Ultrahuman style */
+/* Left hero — full-screen background behind centered form */
 .login-hero {
-  flex: 1; background: #000; position: relative; overflow: hidden;
+  position: absolute; inset: 0; background: #000; overflow: hidden;
   display: flex; flex-direction: column;
 }
 
@@ -912,8 +913,9 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 
 /* Right form side */
 .login-form-side {
-  flex: 1; background: #fff; display: flex; align-items: center; justify-content: center;
-  padding: 48px 44px; min-height: 100vh;
+  position: relative; z-index: 10; background: #fff; display: flex; align-items: center; justify-content: center;
+  padding: 48px 44px; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  width: 100%; max-width: 420px;
 }
 .login-form-container { width: 100%; }
 .login-form-logo { margin-bottom: 48px; }
@@ -959,9 +961,7 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 }
 
 @media (max-width: 900px) {
-  .login-hero { display: none; }
-  .login-form-side { width: 100%; min-height: 100vh; }
-  .login-form-container { max-width: 360px; }
+  .login-form-side { margin: 16px; }
 }
 
 /* ====== CHART ====== */
