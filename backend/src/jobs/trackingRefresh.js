@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const Shipment = require('../models/Shipment');
-const { trackBatchAWBs: dhlTrackBatch, computeTrackingStatus } = require('../services/dhlTracking');
+const { trackBatchAWBs: dhlTrackBatch, computeTrackingStatus, findPickupEvent } = require('../services/dhlTracking');
 const { trackBatchAWBs: upsTrackBatch } = require('../services/upsTracking');
 
 // Guard: prevent overlapping cron runs
@@ -95,9 +95,7 @@ function start() {
             shipment.status = ts.currentMilestone;
 
             if (!shipment.dispatchDate) {
-              const pickupEvent = shipment.trackingEvents
-                .filter(e => e.statusCode === 'PU' || e.statusCode === 'DP')
-                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+              const pickupEvent = findPickupEvent(shipment.trackingEvents);
               if (pickupEvent) {
                 shipment.dispatchDate = new Date(pickupEvent.timestamp);
                 const startOfYear = new Date(shipment.dispatchDate.getFullYear(), 0, 1);

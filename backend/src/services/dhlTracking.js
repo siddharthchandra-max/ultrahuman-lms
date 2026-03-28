@@ -331,6 +331,30 @@ async function trackBatchAWBs(awbs) {
   return results;
 }
 
+// Detect pickup event — works with both XML PI codes (PU/DP) and Unified API descriptions
+function findPickupEvent(events) {
+  // First try exact status codes (XML PI / UPS)
+  const byCode = events
+    .filter(e => e.statusCode === 'PU' || e.statusCode === 'DP')
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+  if (byCode) return byCode;
+
+  // Then try milestone
+  const byMilestone = events
+    .filter(e => e.milestone === 'Picked Up')
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+  if (byMilestone) return byMilestone;
+
+  // Then try description text (DHL Unified API uses "picked up", "Shipment picked up", etc.)
+  const byDesc = events
+    .filter(e => {
+      const d = (e.description || '').toLowerCase();
+      return d.includes('picked up') || d.includes('pickup') || d.includes('shipment picked');
+    })
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+  return byDesc || null;
+}
+
 function computeTrackingStatus(events, shipmentDate, estimatedDelivery, dispatchDate) {
   const status = {
     currentMilestone: 'Booked',
@@ -352,10 +376,9 @@ function computeTrackingStatus(events, shipmentDate, estimatedDelivery, dispatch
   }
 
   // Calculate transit days from dispatch date (Picked Up), not booked date
-  // Fallback: use first PU event from tracking events, then shipmentDate
   let transitStart = dispatchDate ? new Date(dispatchDate) : null;
   if (!transitStart) {
-    const pickupEvent = events.filter(e => e.statusCode === 'PU').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+    const pickupEvent = findPickupEvent(events);
     if (pickupEvent) transitStart = new Date(pickupEvent.timestamp);
   }
   if (transitStart) {
@@ -377,4 +400,4 @@ function computeTrackingStatus(events, shipmentDate, estimatedDelivery, dispatch
   return status;
 }
 
-module.exports = { trackSingleAWB, trackBatchAWBs, trackViaUnifiedAPI, computeTrackingStatus, mapEventCodeToMilestone };
+module.exports = { trackSingleAWB, trackBatchAWBs, trackViaUnifiedAPI, computeTrackingStatus, mapEventCodeToMilestone, findPickupEvent };
