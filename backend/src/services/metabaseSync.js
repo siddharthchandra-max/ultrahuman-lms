@@ -148,7 +148,7 @@ async function syncFromMetabase(sinceDate = '2026-03-01') {
   const existing = await Shipment.find(
     { $or: [{ uhrId: { $exists: true, $ne: '' } }, { awb: { $exists: true, $ne: '' } }] },
     { uhrId: 1, awb: 1 }
-  ).lean();
+  ).maxTimeMS(60000).lean();
   for (const s of existing) {
     if (s.uhrId) existingByUhr[s.uhrId] = s._id;
     if (s.awb) existingByAwb[s.awb] = s._id;
