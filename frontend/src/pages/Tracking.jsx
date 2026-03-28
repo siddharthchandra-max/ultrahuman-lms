@@ -46,26 +46,6 @@ export default function Tracking() {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
   }, []);
 
-  // Fetch status counts whenever filters/dates change
-  const fetchCounts = useCallback(async () => {
-    try {
-      const params = {};
-      if (search) params.search = search;
-      if (filters.courier?.length) params.courier = filters.courier.join(',');
-      if (filters.warehouse?.length) params.warehouse = filters.warehouse.join(',');
-      if (filters.shipmentType?.length) params.shipmentType = filters.shipmentType.join(',');
-      if (filters.logisticsType?.length) params.logisticsType = filters.logisticsType.join(',');
-      if (filters.tatStatus?.length) params.tatStatus = filters.tatStatus.join(',');
-      if (filters.movementType?.length) params.movementType = filters.movementType.join(',');
-      if (dateFrom) params.dateFrom = dateFrom;
-      if (dateTo) params.dateTo = dateTo;
-      const { data } = await api.get('/shipments/counts', { params });
-      setStatusCounts(data);
-    } catch (err) { console.error(err); }
-  }, [search, filters, dateFrom, dateTo]);
-
-  useEffect(() => { fetchCounts(); }, [fetchCounts]);
-
   const fetch = useCallback(async (page = 1) => {
     setLoading(true);
     try {
@@ -90,23 +70,45 @@ export default function Tracking() {
       if (filters.movementType?.length) params.movementType = filters.movementType.join(',');
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
-      const { data } = await api.get('/shipments', { params });
-      setShipments(data.shipments);
-      setPagination(data.pagination);
+      const [shipmentsRes, countsRes] = await Promise.all([
+        api.get('/shipments', { params }),
+        api.get('/shipments/counts', { params: (() => {
+          const cp = {};
+          if (search) cp.search = search;
+          if (filters.courier?.length) cp.courier = filters.courier.join(',');
+          if (filters.warehouse?.length) cp.warehouse = filters.warehouse.join(',');
+          if (filters.shipmentType?.length) cp.shipmentType = filters.shipmentType.join(',');
+          if (filters.logisticsType?.length) cp.logisticsType = filters.logisticsType.join(',');
+          if (filters.tatStatus?.length) cp.tatStatus = filters.tatStatus.join(',');
+          if (filters.movementType?.length) cp.movementType = filters.movementType.join(',');
+          if (dateFrom) cp.dateFrom = dateFrom;
+          if (dateTo) cp.dateTo = dateTo;
+          return cp;
+        })() }).catch(() => ({ data: {} })),
+      ]);
+      setShipments(shipmentsRes.data.shipments);
+      setPagination(shipmentsRes.data.pagination);
+      if (countsRes.data && Object.keys(countsRes.data).length > 0) {
+        setStatusCounts(countsRes.data);
+      }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }, [search, activeTab, activeSubTab, filters, dateFrom, dateTo]);
 
   useEffect(() => { fetch(1); }, [fetch]);
 
-  const getTotal = () => {
-    return Object.values(statusCounts).reduce((a, b) => a + b, 0) || pagination.total;
-  };
-
   const getTabCount = (key) => {
-    if (!key) return getTotal();
+    const hasData = Object.keys(statusCounts).length > 0;
+    if (!key) {
+      // "All" = sum of all status counts, fallback to pagination total
+      return hasData ? Object.values(statusCounts).reduce((a, b) => a + b, 0) : pagination.total;
+    }
     if (key === 'Active') {
       return (statusCounts['In Transit'] || 0) + (statusCounts['Picked Up'] || 0) + (statusCounts['Customs'] || 0) + (statusCounts['Out for Delivery'] || 0) + (statusCounts['Failed'] || 0);
+    }
+    if (!hasData) {
+      // Counts not loaded yet — if this tab is active, use pagination.total
+      return activeTab === key ? pagination.total : 0;
     }
     return statusCounts[key] || 0;
   };
