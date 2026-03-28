@@ -27,6 +27,9 @@ export default function App() {
     localStorage.setItem('uh_theme', theme);
   }, [theme]);
 
+  // Close sidebar overlay on route change
+  useEffect(() => { setSidebarOverlay(false); }, [location.pathname]);
+
   const handleLogin = (t, u) => {
     setToken(t);
     setUser(u);
@@ -40,9 +43,9 @@ export default function App() {
     setUser(null);
     localStorage.removeItem('uh_token');
     localStorage.removeItem('uh_user');
-    navigate('/login');
   };
 
+  // Not logged in — show only login page
   if (!token) {
     return (
       <Routes>
@@ -52,8 +55,10 @@ export default function App() {
     );
   }
 
-  // If logged in and on /login, redirect to dashboard
-  if (location.pathname === '/login') return <Navigate to="/dashboard" replace />;
+  // Logged in but on /login — redirect to dashboard
+  if (location.pathname === '/login') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const pageTitles = {
     '/dashboard': 'Dashboard',
@@ -64,9 +69,6 @@ export default function App() {
     '/upload': 'Upload Data',
   };
   const currentTitle = pageTitles[location.pathname] || (location.pathname.startsWith('/tracking/') ? 'Shipment Details' : 'Dashboard');
-
-  // Close sidebar overlay on route change
-  useEffect(() => { setSidebarOverlay(false); }, [location.pathname]);
 
   return (
     <>
