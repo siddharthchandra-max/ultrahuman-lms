@@ -173,12 +173,22 @@ export default function Login({ onLogin }) {
           <line className="supply-line sl7" x1="460" y1="150" x2="490" y2="130" />
           <line className="supply-line sl8" x1="490" y1="130" x2="510" y2="160" />
 
-          {/* Moving shipment dots along routes */}
-          <circle r="3" className="shipment-dot sd-blue"><animateMotion dur="3s" repeatCount="indefinite" path="M460,150 L310,120" /></circle>
-          <circle r="3" className="shipment-dot sd-green"><animateMotion dur="4s" repeatCount="indefinite" path="M310,120 L130,140" /></circle>
-          <circle r="2.5" className="shipment-dot sd-yellow"><animateMotion dur="3.5s" repeatCount="indefinite" path="M460,150 L390,170" /></circle>
-          <circle r="2.5" className="shipment-dot sd-blue"><animateMotion dur="5s" repeatCount="indefinite" path="M530,175 L530,300" /></circle>
-          <circle r="2.5" className="shipment-dot sd-green"><animateMotion dur="4.5s" repeatCount="indefinite" path="M390,170 L310,120" /></circle>
+          {/* Moving shipment dots along routes — color-coded by courier */}
+          {/* DHL: BLR → FRA (yellow) */}
+          <circle r="3" className="shipment-dot sd-dhl"><animateMotion dur="3s" repeatCount="indefinite" path="M460,150 L310,120" /></circle>
+          <text x="385" y="128" className="map-courier-label cl-dhl">DHL</text>
+          {/* UPS: LON → NYC (brown) */}
+          <circle r="3" className="shipment-dot sd-ups"><animateMotion dur="4s" repeatCount="indefinite" path="M310,120 L130,140" /></circle>
+          <text x="220" y="118" className="map-courier-label cl-ups">UPS</text>
+          {/* FedEx: MUM → DXB (orange) */}
+          <circle r="2.5" className="shipment-dot sd-fedex"><animateMotion dur="3.5s" repeatCount="indefinite" path="M460,150 L390,170" /></circle>
+          <text x="425" y="170" className="map-courier-label cl-fedex">FedEx</text>
+          {/* BlueDart: BLR → DEL (blue) */}
+          <circle r="2.5" className="shipment-dot sd-bluedart"><animateMotion dur="2.5s" repeatCount="indefinite" path="M510,160 L490,130" /></circle>
+          <text x="505" y="140" className="map-courier-label cl-bluedart">BlueDart</text>
+          {/* USPS: DXB → LON (navy) */}
+          <circle r="2.5" className="shipment-dot sd-usps"><animateMotion dur="4.5s" repeatCount="indefinite" path="M390,170 L310,120" /></circle>
+          <text x="350" y="155" className="map-courier-label cl-usps">USPS</text>
 
           {/* Pulsing hub rings */}
           <circle cx="460" cy="150" r="8" className="hub-pulse" />
@@ -315,6 +325,17 @@ export default function Login({ onLogin }) {
             <h2>Track. Reconcile.<br/><span>Optimize.</span></h2>
             <p>Real-time shipment tracking & financial reconciliation for global logistics operations.</p>
           </div>
+        </div>
+      </div>
+
+      {/* Courier partners ticker */}
+      <div className="courier-ticker">
+        <div className="courier-ticker-track">
+          {['DHL Express', 'FedEx', 'UPS', 'BlueDart', 'USPS', 'DHL Express', 'FedEx', 'UPS', 'BlueDart', 'USPS'].map((name, i) => (
+            <div key={i} className="courier-ticker-item">
+              <div className={`courier-logo cl-${name.toLowerCase().replace(/\s/g, '')}`}>{name}</div>
+            </div>
+          ))}
         </div>
       </div>
 

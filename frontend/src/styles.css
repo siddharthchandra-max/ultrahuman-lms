@@ -760,6 +760,23 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .sd-blue { fill: #007ff5; filter: drop-shadow(0 0 6px #007ff5); }
 .sd-green { fill: #0efc6d; filter: drop-shadow(0 0 6px #0efc6d); }
 .sd-yellow { fill: #fdcb6e; filter: drop-shadow(0 0 6px #fdcb6e); }
+/* Courier-specific shipment dots */
+.sd-dhl { fill: #FFCC00; filter: drop-shadow(0 0 6px #FFCC00); }
+.sd-ups { fill: #FFB500; filter: drop-shadow(0 0 6px #FFB500); }
+.sd-fedex { fill: #FF6600; filter: drop-shadow(0 0 6px #FF6600); }
+.sd-bluedart { fill: #0066CC; filter: drop-shadow(0 0 6px #0066CC); }
+.sd-usps { fill: #336699; filter: drop-shadow(0 0 6px #336699); }
+/* Courier labels on map */
+.map-courier-label {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-anchor: middle;
+  opacity: 0.5; animation: label-fade 3s ease-in-out infinite alternate;
+}
+.cl-dhl { fill: #FFCC00; }
+.cl-ups { fill: #FFB500; }
+.cl-fedex { fill: #FF6600; }
+.cl-bluedart { fill: #0066CC; }
+.cl-usps { fill: #336699; }
+@keyframes label-fade { 0% { opacity: 0.3; } 100% { opacity: 0.7; } }
 .hub-pulse {
   fill: none; stroke: #007ff5; stroke-width: 1; opacity: 0;
   animation: hub-ring 2.5s ease-out infinite;
@@ -1000,8 +1017,38 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 }
 .login-footer-text strong { color: rgba(255,255,255,0.5); }
 
+/* Courier partners ticker */
+.courier-ticker {
+  position: absolute; bottom: 32px; left: 0; right: 0; z-index: 100;
+  overflow: hidden; pointer-events: none;
+}
+.courier-ticker-track {
+  display: flex; gap: 48px; width: max-content;
+  animation: courier-scroll 20s linear infinite;
+}
+.courier-ticker-item {
+  flex-shrink: 0;
+}
+.courier-logo {
+  font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 8px 20px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
+  white-space: nowrap;
+}
+.cl-dhlexpress { color: #FFCC00; border-color: rgba(255,204,0,0.2); }
+.cl-fedex { color: #FF6600; border-color: rgba(255,102,0,0.2); }
+.cl-ups { color: #FFB500; border-color: rgba(255,181,0,0.2); }
+.cl-bluedart { color: #0066CC; border-color: rgba(0,102,204,0.2); }
+.cl-usps { color: #004B87; border-color: rgba(0,75,135,0.2); }
+
+@keyframes courier-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 @media (max-width: 900px) {
   .login-form-side { margin: 16px; }
+  .courier-ticker { bottom: 16px; }
 }
 
 /* ====== CHART ====== */
