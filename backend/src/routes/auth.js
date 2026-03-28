@@ -116,17 +116,28 @@ router.post('/register', async (req, res) => {
       role: 'viewer',
     });
 
-    // Send credentials via email
-    try {
-      await sendCredentialsEmail(user.email, user.name, password);
-    } catch (mailErr) {
-      console.error('[Register] Email send failed:', mailErr.message);
-      // Still return success — account is created, admin can share credentials
+    // Send credentials via email if SMTP is configured
+    let emailSent = false;
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        await sendCredentialsEmail(user.email, user.name, password);
+        emailSent = true;
+      } catch (mailErr) {
+        console.error('[Register] Email send failed:', mailErr.message);
+      }
     }
 
-    res.status(201).json({
-      message: `Account created! Login credentials have been sent to ${user.email}`,
-    });
+    if (emailSent) {
+      res.status(201).json({
+        message: `Account created! Login credentials have been sent to ${user.email}`,
+      });
+    } else {
+      // No SMTP configured or email failed — return password directly
+      res.status(201).json({
+        message: `Account created! Please save your credentials below.`,
+        credentials: { email: user.email, password },
+      });
+    }
   } catch (err) {
     if (err.code === 11000) return res.status(400).json({ error: 'Email already exists' });
     res.status(500).json({ error: err.message });

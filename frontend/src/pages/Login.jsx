@@ -8,6 +8,7 @@ export default function Login({ onLogin }) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [credentials, setCredentials] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -19,6 +20,7 @@ export default function Login({ onLogin }) {
       if (mode === 'register') {
         const { data } = await api.post('/auth/register', { name, email });
         setSuccess(data.message);
+        if (data.credentials) setCredentials(data.credentials);
         setName('');
         setEmail('');
       } else {
@@ -36,6 +38,7 @@ export default function Login({ onLogin }) {
     setMode(m);
     setError('');
     setSuccess('');
+    setCredentials(null);
   };
 
   return (
@@ -345,7 +348,16 @@ export default function Login({ onLogin }) {
 
           <form onSubmit={handleSubmit}>
             {error && <div className="login-error">{error}</div>}
-            {success && <div className="login-success">{success}</div>}
+            {success && <div className="login-success">
+              {success}
+              {credentials && (
+                <div style={{ marginTop: 12, padding: '12px', background: 'rgba(255,255,255,0.06)', borderRadius: 8, fontSize: 13 }}>
+                  <div><strong>Email:</strong> {credentials.email}</div>
+                  <div style={{ marginTop: 4 }}><strong>Password:</strong> {credentials.password}</div>
+                  <div style={{ marginTop: 8, fontSize: 11, opacity: 0.7 }}>Save these credentials — switch to Sign In to login</div>
+                </div>
+              )}
+            </div>}
 
             {mode === 'register' && (
               <div className="login-field">
