@@ -60,6 +60,9 @@ router.get('/', auth, async (req, res) => {
       if (dateFrom) match.shipmentDate.$gte = new Date(dateFrom);
       if (dateTo) match.shipmentDate.$lte = new Date(dateTo + 'T23:59:59.999Z');
     }
+    // Build base match (without status) for counts
+    const baseMatch = { ...match };
+
     if (status) {
       if (status.includes(',')) {
         match.status = { $in: status.split(',').map(s => s.trim()) };
@@ -68,18 +71,26 @@ router.get('/', auth, async (req, res) => {
       }
     }
 
-    const [shipments, total] = await Promise.all([
+    const [shipments, total, statusCountsAgg] = await Promise.all([
       Shipment.find(match)
         .sort({ [sortBy]: Number(sortOrder) })
         .skip((Number(page) - 1) * Number(limit))
         .limit(Number(limit))
         .select('-__v'),
       Shipment.countDocuments(match),
+      Shipment.aggregate([
+        { $match: baseMatch },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
     ]);
+
+    const statusCounts = {};
+    statusCountsAgg.forEach(c => { statusCounts[c._id] = c.count; });
 
     res.json({
       shipments,
       pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / Number(limit)) },
+      statusCounts,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

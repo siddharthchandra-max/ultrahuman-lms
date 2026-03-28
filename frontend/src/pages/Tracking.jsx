@@ -70,26 +70,11 @@ export default function Tracking() {
       if (filters.movementType?.length) params.movementType = filters.movementType.join(',');
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
-      const [shipmentsRes, countsRes] = await Promise.all([
-        api.get('/shipments', { params }),
-        api.get('/shipments/counts', { params: (() => {
-          const cp = {};
-          if (search) cp.search = search;
-          if (filters.courier?.length) cp.courier = filters.courier.join(',');
-          if (filters.warehouse?.length) cp.warehouse = filters.warehouse.join(',');
-          if (filters.shipmentType?.length) cp.shipmentType = filters.shipmentType.join(',');
-          if (filters.logisticsType?.length) cp.logisticsType = filters.logisticsType.join(',');
-          if (filters.tatStatus?.length) cp.tatStatus = filters.tatStatus.join(',');
-          if (filters.movementType?.length) cp.movementType = filters.movementType.join(',');
-          if (dateFrom) cp.dateFrom = dateFrom;
-          if (dateTo) cp.dateTo = dateTo;
-          return cp;
-        })() }).catch(() => ({ data: {} })),
-      ]);
-      setShipments(shipmentsRes.data.shipments);
-      setPagination(shipmentsRes.data.pagination);
-      if (countsRes.data && Object.keys(countsRes.data).length > 0) {
-        setStatusCounts(countsRes.data);
+      const { data } = await api.get('/shipments', { params });
+      setShipments(data.shipments);
+      setPagination(data.pagination);
+      if (data.statusCounts) {
+        setStatusCounts(data.statusCounts);
       }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
