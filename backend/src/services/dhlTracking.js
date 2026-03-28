@@ -289,79 +289,44 @@ async function trackSingleAWB(awb) {
   }
 }
 
-// Process array in parallel with concurrency limit
-async function parallelLimit(items, concurrency, fn) {
-  const results = [];
-  let index = 0;
-
-  async function worker() {
-    while (index < items.length) {
-      const i = index++;
-      results[i] = await fn(items[i]);
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
-  await Promise.all(workers);
-  return results;
-}
-
 async function trackBatchAWBs(awbs) {
   const results = {};
 
-  // Try Unified API with controlled concurrency (5 at a time to avoid rate limits)
-  const remaining = [];
-  await parallelLimit(awbs, 5, async (awb) => {
-    const result = await trackViaUnifiedAPI(awb);
-    if (result && result.events.length > 0) {
-      results[awb] = result;
-    } else {
-      remaining.push(awb);
-    }
-  });
+  // DHL Unified API rate limit: ~13 req per 5 seconds, resets per minute
+  // Throttle to 2/sec to stay under limit, with pause+retry on 429
+  let consecutive429 = 0;
 
-  if (remaining.length === 0) return results;
-
-  // Fall back to XML PI for AWBs not found via Unified API
-  if (!DHL_SITE_ID || !DHL_PASSWORD) {
-    for (const awb of remaining) {
-      if (!results[awb]) results[awb] = { events: [], error: 'DHL credentials not configured' };
-    }
-    return results;
-  }
-
-  // DHL XML PI allows up to 10 AWBs per request — run 3 chunks in parallel
-  const chunks = [];
-  for (let i = 0; i < remaining.length; i += 10) {
-    chunks.push(remaining.slice(i, i + 10));
-  }
-
-  await parallelLimit(chunks, 3, async (chunk) => {
+  for (const awb of awbs) {
     try {
-      const xmlBody = buildTrackingXML(chunk);
-      console.log(`[DHL XML PI] Batch tracking ${chunk.length} AWBs`);
-
-      const response = await axios.post(DHL_API_URL, xmlBody, {
-        headers: { 'Content-Type': 'application/xml' },
-        timeout: 30000,
-        responseType: 'text',
-      });
-
-      const parsed = parseXMLResponse(response.data);
-
-      for (const awb of chunk) {
-        const key = String(awb);
-        results[key] = parsed[key] || { events: [], error: 'No tracking data in response' };
+      const result = await trackViaUnifiedAPI(awb);
+      if (result && result.events.length > 0) {
+        results[awb] = result;
+      } else {
+        results[awb] = { events: [], error: 'No tracking data' };
       }
+      consecutive429 = 0;
+      // Pace at 2 req/sec
+      await new Promise(r => setTimeout(r, 500));
     } catch (err) {
-      console.error(`[DHL] Batch track error:`, err.message);
-      for (const awb of chunk) {
-        if (!results[awb]) {
-          results[awb] = { events: [], error: err.message };
+      if (err?.response?.status === 429 || (err?.message || '').includes('429')) {
+        consecutive429++;
+        if (consecutive429 >= 3) {
+          console.log(`[DHL] Rate limited, pausing 65s...`);
+          await new Promise(r => setTimeout(r, 65000));
+          consecutive429 = 0;
         }
+        // Retry this AWB
+        try {
+          const result = await trackViaUnifiedAPI(awb);
+          results[awb] = result && result.events.length > 0 ? result : { events: [], error: 'No data after retry' };
+        } catch (retryErr) {
+          results[awb] = { events: [], error: retryErr.message };
+        }
+      } else {
+        results[awb] = { events: [], error: err.message };
       }
     }
-  });
+  }
 
   return results;
 }
