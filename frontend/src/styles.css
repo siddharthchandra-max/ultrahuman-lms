@@ -521,7 +521,7 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 /* Left hero — full-screen background behind centered form */
 .login-hero {
   position: absolute; inset: 0; background: #000; overflow: hidden;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; z-index: 1;
 }
 
 .login-hero-brand {
@@ -913,7 +913,7 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 
 /* Right form side */
 .login-form-side {
-  position: relative; z-index: 10; background: #fff; display: flex; align-items: center; justify-content: center;
+  position: relative; z-index: 100; background: #fff; display: flex; align-items: center; justify-content: center;
   padding: 48px 44px; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.3);
   width: 100%; max-width: 420px;
 }
