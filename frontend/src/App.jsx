@@ -43,8 +43,17 @@ export default function App() {
     navigate('/login');
   };
 
-  if (!token && location.pathname !== '/login') return <Navigate to="/login" />;
-  if (location.pathname === '/login') return <Login onLogin={handleLogin} />;
+  if (!token) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+  // If logged in and on /login, redirect to dashboard
+  if (location.pathname === '/login') return <Navigate to="/dashboard" replace />;
 
   const pageTitles = {
     '/dashboard': 'Dashboard',
