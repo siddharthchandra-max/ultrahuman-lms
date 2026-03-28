@@ -2,23 +2,40 @@ import React, { useState } from 'react';
 import api from '../utils/api';
 
 export default function Login({ onLogin }) {
+  const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      const { data } = await api.post('/auth/login', { email, password });
-      onLogin(data.token, data.user);
+      if (mode === 'register') {
+        const { data } = await api.post('/auth/register', { name, email });
+        setSuccess(data.message);
+        setName('');
+        setEmail('');
+      } else {
+        const { data } = await api.post('/auth/login', { email, password });
+        onLogin(data.token, data.user);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.error || (mode === 'register' ? 'Registration failed' : 'Login failed'));
     } finally {
       setLoading(false);
     }
+  };
+
+  const switchMode = (m) => {
+    setMode(m);
+    setError('');
+    setSuccess('');
   };
 
   return (
@@ -308,11 +325,40 @@ export default function Login({ onLogin }) {
       <div className="login-form-side">
         <div className="login-form-container">
 
-          <h1>Welcome back</h1>
-          <p className="login-form-desc">Sign in to your UH-LMS account</p>
+          {/* Mode tabs */}
+          <div className="login-tabs">
+            <button className={`login-tab ${mode === 'login' ? 'active' : ''}`} onClick={() => switchMode('login')} type="button">Sign In</button>
+            <button className={`login-tab ${mode === 'register' ? 'active' : ''}`} onClick={() => switchMode('register')} type="button">Register</button>
+          </div>
+
+          {mode === 'login' ? (
+            <>
+              <h1>Welcome back</h1>
+              <p className="login-form-desc">Sign in to your UH-LMS account</p>
+            </>
+          ) : (
+            <>
+              <h1>Create account</h1>
+              <p className="login-form-desc">Only @ultrahuman.com emails are allowed</p>
+            </>
+          )}
 
           <form onSubmit={handleSubmit}>
             {error && <div className="login-error">{error}</div>}
+            {success && <div className="login-success">{success}</div>}
+
+            {mode === 'register' && (
+              <div className="login-field">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  placeholder="Your full name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             <div className="login-field">
               <label>Email</label>
@@ -325,19 +371,21 @@ export default function Login({ onLogin }) {
               />
             </div>
 
-            <div className="login-field">
-              <label>Password</label>
-              <input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            {mode === 'login' && (
+              <div className="login-field">
+                <label>Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             <button type="submit" className="login-submit" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (mode === 'register' ? 'Registering...' : 'Signing in...') : (mode === 'register' ? 'Register' : 'Sign In')}
             </button>
           </form>
 
