@@ -913,52 +913,57 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 
 /* Right form side */
 .login-form-side {
-  position: relative; z-index: 100; background: #fff; display: flex; align-items: center; justify-content: center;
-  padding: 48px 44px; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  position: relative; z-index: 100;
+  background: rgba(255,255,255,0.06); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 44px; border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
   width: 100%; max-width: 420px;
 }
 .login-form-container { width: 100%; }
 .login-form-logo { margin-bottom: 48px; }
 
 .login-form-container h1 {
-  font-size: 28px; font-weight: 800; color: #000; margin-bottom: 8px;
+  font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px;
   letter-spacing: -0.8px; line-height: 1.15;
 }
 .login-form-desc {
-  font-size: 14px; color: #999; margin-bottom: 32px; font-weight: 400;
+  font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 32px; font-weight: 400;
 }
 
 .login-field { margin-bottom: 20px; }
 .login-field label {
-  display: block; font-size: 13px; font-weight: 600; color: #333;
+  display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7);
   margin-bottom: 8px;
 }
 .login-field input {
-  width: 100%; padding: 12px 16px; border: 1.5px solid #e5e5e5;
-  border-radius: 10px; font-size: 14px; font-family: inherit; color: #000;
-  transition: all 0.2s; background: #fff;
+  width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; font-size: 14px; font-family: inherit; color: #fff;
+  transition: all 0.2s; background: rgba(255,255,255,0.06);
 }
-.login-field input::placeholder { color: #bbb; }
-.login-field input:focus { outline: none; border-color: #000; box-shadow: none; }
+.login-field input::placeholder { color: rgba(255,255,255,0.3); }
+.login-field input:focus { outline: none; border-color: rgba(0,127,245,0.6); box-shadow: 0 0 0 3px rgba(0,127,245,0.1); }
 
 .login-submit {
-  width: 100%; padding: 13px; background: #000; color: #fff;
+  width: 100%; padding: 13px; background: #007ff5; color: #fff;
   border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
   cursor: pointer; font-family: inherit; transition: all 0.2s; margin-top: 8px;
   letter-spacing: -0.2px;
 }
-.login-submit:hover { background: #1a1a1a; }
+.login-submit:hover { background: #0066cc; }
 .login-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .login-error {
-  padding: 12px 16px; background: #fff5f5; color: #e53e3e;
-  border: 1px solid #fed7d7; border-radius: 10px; margin-bottom: 20px; font-size: 13px;
+  padding: 12px 16px; background: rgba(229,62,62,0.1); color: #fc8181;
+  border: 1px solid rgba(229,62,62,0.2); border-radius: 10px; margin-bottom: 20px; font-size: 13px;
 }
 
 .login-footer-text {
-  margin-top: 40px; text-align: center; font-size: 12px; color: #bbb;
-  padding-top: 24px; border-top: 1px solid #f0f0f0;
+  margin-top: 40px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.3);
+  padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08);
 }
+.login-footer-text strong { color: rgba(255,255,255,0.5); }
 
 @media (max-width: 900px) {
   .login-form-side { margin: 16px; }
