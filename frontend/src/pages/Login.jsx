@@ -298,7 +298,13 @@ export default function Login({ onLogin }) {
         </div>
       </div>
 
-      {/* Right — Form */}
+      {/* Tagline above card */}
+      <div className="login-tagline">
+        <span className="login-tag">Logistics Management System</span>
+        <h2>Track. Reconcile. <span>Optimize.</span></h2>
+      </div>
+
+      {/* Form card */}
       <div className="login-form-side">
         <div className="login-form-container">
 
