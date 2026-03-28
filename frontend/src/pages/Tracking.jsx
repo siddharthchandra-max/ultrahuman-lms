@@ -31,8 +31,8 @@ export default function Tracking() {
   const [loading, setLoading] = useState(true);
   const [statusCounts, setStatusCounts] = useState({});
   const [viewMode, setViewMode] = useState('AWB');
-  const [dateFrom, setDateFrom] = useState('2025-12-01');
-  const [dateTo, setDateTo] = useState('2026-02-28');
+  const [dateFrom, setDateFrom] = useState('2026-03-01');
+  const [dateTo, setDateTo] = useState(new Date().toISOString().slice(0, 10));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [colFilters, setColFilters] = useState({});
@@ -44,13 +44,27 @@ export default function Tracking() {
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setFilterOpts(r.data)).catch(() => {});
-    // Get status counts
-    api.get('/tracking/summary/stats').then(r => {
-      const counts = {};
-      (r.data.byMilestone || []).forEach(m => { counts[m._id] = m.count; });
-      setStatusCounts(counts);
-    }).catch(() => {});
   }, []);
+
+  // Fetch status counts whenever filters/dates change
+  const fetchCounts = useCallback(async () => {
+    try {
+      const params = {};
+      if (search) params.search = search;
+      if (filters.courier?.length) params.courier = filters.courier.join(',');
+      if (filters.warehouse?.length) params.warehouse = filters.warehouse.join(',');
+      if (filters.shipmentType?.length) params.shipmentType = filters.shipmentType.join(',');
+      if (filters.logisticsType?.length) params.logisticsType = filters.logisticsType.join(',');
+      if (filters.tatStatus?.length) params.tatStatus = filters.tatStatus.join(',');
+      if (filters.movementType?.length) params.movementType = filters.movementType.join(',');
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      const { data } = await api.get('/shipments/counts', { params });
+      setStatusCounts(data);
+    } catch (err) { console.error(err); }
+  }, [search, filters, dateFrom, dateTo]);
+
+  useEffect(() => { fetchCounts(); }, [fetchCounts]);
 
   const fetch = useCallback(async (page = 1) => {
     setLoading(true);

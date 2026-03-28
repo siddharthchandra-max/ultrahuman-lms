@@ -106,6 +106,65 @@ router.get('/filters', auth, async (req, res) => {
   }
 });
 
+// GET /api/shipments/counts — status counts respecting filters
+router.get('/counts', auth, async (req, res) => {
+  try {
+    const { search, courier, warehouse, shipmentType, logisticsType, tatStatus, movementType, dateFrom, dateTo } = req.query;
+    const match = {};
+    if (search) {
+      match.$or = [
+        { awb: { $regex: search, $options: 'i' } },
+        { invoiceNumber: { $regex: search, $options: 'i' } },
+        { uhrId: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (courier) {
+      const vals = courier.split(',').map(s => s.trim());
+      match.courier = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (warehouse) {
+      const vals = warehouse.split(',').map(s => s.trim());
+      match.warehouse = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (shipmentType) {
+      const vals = shipmentType.split(',').map(s => s.trim());
+      match.shipmentType = vals.length > 1 ? { $in: vals.map(v => new RegExp(v, 'i')) } : { $regex: vals[0], $options: 'i' };
+    }
+    if (logisticsType) {
+      const vals = logisticsType.split(',').map(s => s.trim());
+      match.logisticsType = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (movementType) {
+      const vals = movementType.split(',').map(s => s.trim());
+      match.movementType = vals.length > 1 ? { $in: vals } : vals[0];
+    }
+    if (tatStatus) {
+      const vals = tatStatus.split(',').map(s => s.trim());
+      if (vals.includes('Delayed') && !vals.includes('On-time')) {
+        match['trackingStatus.isDelayed'] = true;
+      } else if (vals.includes('On-time') && !vals.includes('Delayed')) {
+        match['trackingStatus.isDelayed'] = { $ne: true };
+      }
+    }
+    if (dateFrom || dateTo) {
+      match.shipmentDate = {};
+      if (dateFrom) match.shipmentDate.$gte = new Date(dateFrom);
+      if (dateTo) match.shipmentDate.$lte = new Date(dateTo + 'T23:59:59.999Z');
+    }
+
+    const counts = await Shipment.aggregate([
+      { $match: match },
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]);
+
+    const result = {};
+    counts.forEach(c => { result[c._id] = c.count; });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/shipments/lookup/:awb — AWB detail
 router.get('/lookup/:awb', auth, async (req, res) => {
   try {
