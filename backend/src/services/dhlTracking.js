@@ -289,21 +289,36 @@ async function trackSingleAWB(awb) {
   }
 }
 
+// Process array in parallel with concurrency limit
+async function parallelLimit(items, concurrency, fn) {
+  const results = [];
+  let index = 0;
+
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      results[i] = await fn(items[i]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 async function trackBatchAWBs(awbs) {
   const results = {};
 
-  // Try Unified API first for all AWBs (parallel, respects rate limits)
+  // Try Unified API with controlled concurrency (5 at a time to avoid rate limits)
   const remaining = [];
-  const unifiedPromises = awbs.map(async (awb) => {
+  await parallelLimit(awbs, 5, async (awb) => {
     const result = await trackViaUnifiedAPI(awb);
     if (result && result.events.length > 0) {
       results[awb] = result;
-      console.log(`[DHL Unified] AWB ${awb}: ${result.events.length} events`);
     } else {
       remaining.push(awb);
     }
   });
-  await Promise.all(unifiedPromises);
 
   if (remaining.length === 0) return results;
 
@@ -315,16 +330,16 @@ async function trackBatchAWBs(awbs) {
     return results;
   }
 
-  // DHL allows up to 10 AWBs per request
+  // DHL XML PI allows up to 10 AWBs per request — run 3 chunks in parallel
   const chunks = [];
   for (let i = 0; i < remaining.length; i += 10) {
     chunks.push(remaining.slice(i, i + 10));
   }
 
-  for (const chunk of chunks) {
+  await parallelLimit(chunks, 3, async (chunk) => {
     try {
       const xmlBody = buildTrackingXML(chunk);
-      console.log(`[DHL XML PI] Batch tracking ${chunk.length} AWBs: ${chunk.join(', ')}`);
+      console.log(`[DHL XML PI] Batch tracking ${chunk.length} AWBs`);
 
       const response = await axios.post(DHL_API_URL, xmlBody, {
         headers: { 'Content-Type': 'application/xml' },
@@ -336,11 +351,7 @@ async function trackBatchAWBs(awbs) {
 
       for (const awb of chunk) {
         const key = String(awb);
-        if (parsed[key]) {
-          results[key] = parsed[key];
-        } else {
-          results[key] = { events: [], error: 'No tracking data in response' };
-        }
+        results[key] = parsed[key] || { events: [], error: 'No tracking data in response' };
       }
     } catch (err) {
       console.error(`[DHL] Batch track error:`, err.message);
@@ -350,12 +361,7 @@ async function trackBatchAWBs(awbs) {
         }
       }
     }
-
-    // Rate limit between batches
-    if (chunks.length > 1) {
-      await new Promise(r => setTimeout(r, 500));
-    }
-  }
+  });
 
   return results;
 }

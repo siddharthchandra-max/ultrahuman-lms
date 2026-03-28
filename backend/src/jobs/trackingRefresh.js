@@ -3,10 +3,20 @@ const Shipment = require('../models/Shipment');
 const { trackBatchAWBs: dhlTrackBatch, computeTrackingStatus } = require('../services/dhlTracking');
 const { trackBatchAWBs: upsTrackBatch } = require('../services/upsTracking');
 
+// Guard: prevent overlapping cron runs
+let isRunning = false;
+
 function start() {
   // Run every 10 minutes
   cron.schedule('*/10 * * * *', async () => {
+    if (isRunning) {
+      console.log('[Cron] Previous tracking refresh still running, skipping this cycle');
+      return;
+    }
+    isRunning = true;
+    const startTime = Date.now();
     console.log('[Cron] Refreshing active shipment tracking...');
+
     try {
       const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000);
       const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
@@ -21,89 +31,123 @@ function start() {
         ],
       };
 
-      // Fetch all active shipments — no limit, process everything each cycle
+      // Fetch all active shipments
       const active = await Shipment.find(baseQuery)
-        .select('awb courier shipmentDate dispatchDate trackingEvents trackingStatus');
+        .select('awb courier')
+        .lean();
 
       // Group by courier
-      const dhlShipments = active.filter(s => {
+      const dhlAwbs = [];
+      const upsAwbs = [];
+      for (const s of active) {
         const c = (s.courier || '').toLowerCase();
-        return c.includes('dhl') || c.includes('bluedart') || c.includes('fedex') || !c;
-      });
-      const upsShipments = active.filter(s => s.courier && s.courier.toLowerCase().includes('ups'));
+        if (c.includes('ups')) {
+          upsAwbs.push(s.awb);
+        } else {
+          // DHL, BlueDart, FedEx, or unknown — all go through DHL Unified API
+          dhlAwbs.push(s.awb);
+        }
+      }
 
-      const totalActive = dhlShipments.length + upsShipments.length;
+      const totalActive = dhlAwbs.length + upsAwbs.length;
       if (totalActive === 0) {
         console.log('[Cron] No shipments need refresh');
         return;
       }
 
-      const updateShipments = async (results) => {
+      console.log(`[Cron] Found ${totalActive} shipments to track (DHL/BlueDart/FedEx: ${dhlAwbs.length}, UPS: ${upsAwbs.length})`);
+
+      // Process a chunk of AWBs — track via API then update DB
+      const processChunk = async (awbs, trackFn, label) => {
+        if (awbs.length === 0) return 0;
+
+        console.log(`[Cron] ${label}: tracking ${awbs.length} AWBs...`);
+        const results = await trackFn(awbs);
+
         let updated = 0;
+        let stamped = 0;
         for (const [awb, data] of Object.entries(results)) {
-          const shipment = await Shipment.findOne({ awb }).sort({ shipmentDate: -1 });
-          if (!shipment) continue;
+          try {
+            const shipment = await Shipment.findOne({ awb }).sort({ shipmentDate: -1 });
+            if (!shipment) continue;
 
-          // Always stamp lastTrackedAt so we don't re-query this AWB next cycle
-          if (!shipment.trackingStatus) shipment.trackingStatus = {};
-          shipment.trackingStatus.lastTrackedAt = new Date();
+            // Always stamp lastTrackedAt
+            if (!shipment.trackingStatus) shipment.trackingStatus = {};
+            shipment.trackingStatus.lastTrackedAt = new Date();
+            stamped++;
 
-          // If no events returned, just save the timestamp and move on
-          if (!data.events || data.events.length === 0) {
-            await shipment.save();
-            continue;
-          }
-
-          const existing = new Set(
-            (shipment.trackingEvents || []).map(e => `${e.timestamp?.toISOString()}_${e.statusCode}`)
-          );
-          const newEvents = data.events.filter(
-            e => !existing.has(`${e.timestamp.toISOString()}_${e.statusCode}`)
-          );
-          shipment.trackingEvents = [...(shipment.trackingEvents || []), ...newEvents]
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-          const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
-          shipment.trackingStatus = ts;
-          shipment.status = ts.currentMilestone;
-
-          // Set dispatch date and week from pickup event
-          if (!shipment.dispatchDate) {
-            const pickupEvent = shipment.trackingEvents.filter(e => e.statusCode === 'PU' || e.statusCode === 'DP').sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
-            if (pickupEvent) {
-              shipment.dispatchDate = new Date(pickupEvent.timestamp);
-              const startOfYear = new Date(shipment.dispatchDate.getFullYear(), 0, 1);
-              shipment.week = 'W' + Math.ceil(((shipment.dispatchDate - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+            if (!data.events || data.events.length === 0) {
+              await shipment.save();
+              continue;
             }
-          }
 
-          await shipment.save();
-          updated++;
+            const existing = new Set(
+              (shipment.trackingEvents || []).map(e => `${e.timestamp?.toISOString()}_${e.statusCode}`)
+            );
+            const newEvents = data.events.filter(
+              e => !existing.has(`${e.timestamp.toISOString()}_${e.statusCode}`)
+            );
+            shipment.trackingEvents = [...(shipment.trackingEvents || []), ...newEvents]
+              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const ts = computeTrackingStatus(shipment.trackingEvents, shipment.shipmentDate, data.estimatedDelivery, shipment.dispatchDate);
+            shipment.trackingStatus = ts;
+            shipment.status = ts.currentMilestone;
+
+            if (!shipment.dispatchDate) {
+              const pickupEvent = shipment.trackingEvents
+                .filter(e => e.statusCode === 'PU' || e.statusCode === 'DP')
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+              if (pickupEvent) {
+                shipment.dispatchDate = new Date(pickupEvent.timestamp);
+                const startOfYear = new Date(shipment.dispatchDate.getFullYear(), 0, 1);
+                shipment.week = 'W' + Math.ceil(((shipment.dispatchDate - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+              }
+            }
+
+            await shipment.save();
+            updated++;
+          } catch (err) {
+            // Don't let one bad shipment kill the whole batch
+            console.error(`[Cron] Error updating ${awb}:`, err.message);
+          }
         }
+
+        console.log(`[Cron] ${label}: ${updated} updated, ${stamped} stamped out of ${awbs.length}`);
         return updated;
       };
 
-      // Track DHL/BlueDart/FedEx and UPS in parallel
-      const [dhlUpdated, upsUpdated] = await Promise.all([
+      // Process in chunks of 500 for DHL, 200 for UPS — parallel between couriers
+      const CHUNK_DHL = 500;
+      const CHUNK_UPS = 200;
+
+      let dhlTotal = 0;
+      let upsTotal = 0;
+
+      // Run DHL and UPS processing in parallel
+      await Promise.all([
+        // DHL/BlueDart/FedEx — chunks of 500
         (async () => {
-          if (dhlShipments.length === 0) return 0;
-          const awbs = dhlShipments.map(s => s.awb);
-          console.log(`[Cron] Tracking ${awbs.length} DHL/BlueDart/FedEx shipments...`);
-          const results = await dhlTrackBatch(awbs);
-          return updateShipments(results);
+          for (let i = 0; i < dhlAwbs.length; i += CHUNK_DHL) {
+            const chunk = dhlAwbs.slice(i, i + CHUNK_DHL);
+            dhlTotal += await processChunk(chunk, dhlTrackBatch, `DHL chunk ${Math.floor(i / CHUNK_DHL) + 1}`);
+          }
         })(),
+        // UPS — chunks of 200, 10 parallel requests per chunk
         (async () => {
-          if (upsShipments.length === 0) return 0;
-          const awbs = upsShipments.map(s => s.awb);
-          console.log(`[Cron] Tracking ${awbs.length} UPS shipments...`);
-          const results = await upsTrackBatch(awbs);
-          return updateShipments(results);
+          for (let i = 0; i < upsAwbs.length; i += CHUNK_UPS) {
+            const chunk = upsAwbs.slice(i, i + CHUNK_UPS);
+            upsTotal += await processChunk(chunk, (awbs) => upsTrackBatch(awbs, 10), `UPS chunk ${Math.floor(i / CHUNK_UPS) + 1}`);
+          }
         })(),
       ]);
 
-      console.log(`[Cron] Updated ${dhlUpdated + upsUpdated}/${totalActive} shipments (DHL: ${dhlUpdated}/${dhlShipments.length}, UPS: ${upsUpdated}/${upsShipments.length})`);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`[Cron] Done in ${elapsed}s — Updated ${dhlTotal + upsTotal}/${totalActive} (DHL: ${dhlTotal}/${dhlAwbs.length}, UPS: ${upsTotal}/${upsAwbs.length})`);
     } catch (err) {
       console.error('[Cron] Tracking refresh error:', err.message);
+    } finally {
+      isRunning = false;
     }
   });
 

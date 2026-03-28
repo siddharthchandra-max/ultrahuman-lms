@@ -133,7 +133,6 @@ async function trackSingleAWB(awb) {
 
   try {
     const token = await getUPSToken();
-    console.log(`[UPS] Tracking AWB: ${awb}`);
 
     const response = await axios.get(`${UPS_TRACK_URL}/${awb}`, {
       headers: {
@@ -145,8 +144,6 @@ async function trackSingleAWB(awb) {
     });
 
     const parsed = parseUPSEvents(response.data);
-    console.log(`[UPS] AWB ${awb}: ${parsed.events.length} events, latest: ${parsed.events[0]?.description || 'none'}`);
-
     return { awb, ...parsed };
   } catch (err) {
     const errData = err.response?.data;
@@ -154,12 +151,28 @@ async function trackSingleAWB(awb) {
     if (errData?.response?.errors?.[0]?.message) {
       msg = errData.response.errors[0].message;
     }
-    console.error(`[UPS] Track AWB ${awb} error:`, msg);
     return { awb, events: [], error: msg };
   }
 }
 
-async function trackBatchAWBs(awbs) {
+// Process array in parallel with concurrency limit
+async function parallelLimit(items, concurrency, fn) {
+  const results = [];
+  let index = 0;
+
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      results[i] = await fn(items[i]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+async function trackBatchAWBs(awbs, concurrency = 10) {
   const results = {};
 
   if (!UPS_CLIENT_ID || !UPS_CLIENT_SECRET) {
@@ -169,13 +182,17 @@ async function trackBatchAWBs(awbs) {
     return results;
   }
 
-  // UPS API tracks one at a time
-  for (const awb of awbs) {
-    results[awb] = await trackSingleAWB(awb);
-    // Rate limit
-    if (awbs.length > 1) {
-      await new Promise(r => setTimeout(r, 300));
-    }
+  // Pre-fetch token so all parallel requests share it
+  await getUPSToken();
+
+  // Track in parallel with concurrency limit (default 10 at a time)
+  const trackResults = await parallelLimit(awbs, concurrency, async (awb) => {
+    const result = await trackSingleAWB(awb);
+    return { awb, result };
+  });
+
+  for (const { awb, result } of trackResults) {
+    results[awb] = result;
   }
 
   return results;
