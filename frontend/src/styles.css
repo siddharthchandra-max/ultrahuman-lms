@@ -522,6 +522,7 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .login-hero {
   position: absolute; inset: 0; background: #000; overflow: hidden;
   display: flex; flex-direction: column; z-index: 1;
+  pointer-events: none; isolation: isolate;
 }
 
 .login-hero-brand {
@@ -530,8 +531,7 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .uh-logo { height: 24px; }
 
 .login-hero-center {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  position: relative; z-index: 1; padding: 0 40px;
+  display: none;
 }
 
 /* Ambient glow */
