@@ -8,8 +8,10 @@ const DHL_PASSWORD = process.env.DHL_PASSWORD;
 // DHL Unified Tracking API (REST)
 const DHL_UNIFIED_API_KEY = process.env.DHL_UNIFIED_API_KEY;
 
-// Event code → milestone mapping based on DHL Express event codes
+// Event code → milestone mapping
+// Covers both DHL XML PI codes (PU, AF, etc.) and DHL Unified API codes (transit, delivered, etc.)
 const EVENT_CODE_MAP = {
+  // DHL XML PI codes
   'PU': 'Picked Up',
   'AF': 'In Transit',
   'PL': 'In Transit',
@@ -32,11 +34,17 @@ const EVENT_CODE_MAP = {
   'RT': 'Returned',
   'RD': 'Returned',
   'BN': 'Booked',
+  // DHL Unified API codes (lowercase)
+  'PRE-TRANSIT': 'Booked',
+  'TRANSIT': 'In Transit',
+  'DELIVERED': 'Delivered',
+  'FAILURE': 'Failed',
+  'UNKNOWN': 'In Transit',
 };
 
 function mapEventCodeToMilestone(eventCode) {
   if (!eventCode) return 'In Transit';
-  return EVENT_CODE_MAP[eventCode.toUpperCase()] || 'In Transit';
+  return EVENT_CODE_MAP[eventCode.toUpperCase()] || EVENT_CODE_MAP[eventCode] || 'In Transit';
 }
 
 // Simple XML tag extractor (no external dependency needed)
@@ -331,28 +339,35 @@ async function trackBatchAWBs(awbs) {
   return results;
 }
 
-// Detect pickup event — works with both XML PI codes (PU/DP) and Unified API descriptions
+// Detect pickup/dispatch event — works with all couriers
+// Priority: PU/DP code → 'Picked Up' milestone → description match → first transit event
 function findPickupEvent(events) {
-  // First try exact status codes (XML PI / UPS)
-  const byCode = events
-    .filter(e => e.statusCode === 'PU' || e.statusCode === 'DP')
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+  const sorted = [...events].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // 1. Exact status codes (XML PI / UPS)
+  const byCode = sorted.find(e => e.statusCode === 'PU' || e.statusCode === 'DP');
   if (byCode) return byCode;
 
-  // Then try milestone
-  const byMilestone = events
-    .filter(e => e.milestone === 'Picked Up')
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
+  // 2. Milestone = 'Picked Up'
+  const byMilestone = sorted.find(e => e.milestone === 'Picked Up');
   if (byMilestone) return byMilestone;
 
-  // Then try description text (DHL Unified API uses "picked up", "Shipment picked up", etc.)
-  const byDesc = events
-    .filter(e => {
-      const d = (e.description || '').toLowerCase();
-      return d.includes('picked up') || d.includes('pickup') || d.includes('shipment picked');
-    })
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))[0];
-  return byDesc || null;
+  // 3. Description text
+  const byDesc = sorted.find(e => {
+    const d = (e.description || '').toLowerCase();
+    return d.includes('picked up') || d.includes('pickup') || d.includes('shipment picked');
+  });
+  if (byDesc) return byDesc;
+
+  // 4. First transit/movement event (for BlueDart etc. that skip pickup scan)
+  //    Skip pre-transit/booked events — find first actual movement
+  const firstTransit = sorted.find(e => {
+    const code = (e.statusCode || '').toLowerCase();
+    const desc = (e.description || '').toLowerCase();
+    return (code === 'transit' || e.milestone === 'In Transit') &&
+      !desc.includes('booked') && !desc.includes('label') && !desc.includes('billing');
+  });
+  return firstTransit || null;
 }
 
 function computeTrackingStatus(events, shipmentDate, estimatedDelivery, dispatchDate) {
