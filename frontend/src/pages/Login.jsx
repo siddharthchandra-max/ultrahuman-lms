@@ -135,9 +135,18 @@ export default function Login({ onLogin }) {
           <path className="route-path r1" d="M50,400 Q150,200 250,250 T450,100" />
           <path className="route-path r2" d="M0,300 Q200,100 300,200 T500,50" />
           <path className="route-path r3" d="M100,450 Q250,300 350,350 T500,200" />
-          <circle className="route-dot d1" r="4"><animateMotion dur="4s" repeatCount="indefinite" path="M50,400 Q150,200 250,250 T450,100" /></circle>
-          <circle className="route-dot d2" r="3"><animateMotion dur="5s" repeatCount="indefinite" path="M0,300 Q200,100 300,200 T500,50" /></circle>
-          <circle className="route-dot d3" r="3.5"><animateMotion dur="6s" repeatCount="indefinite" path="M100,450 Q250,300 350,350 T500,200" /></circle>
+          <g className="shipment-plane sp-blue">
+            <animateMotion dur="4s" repeatCount="indefinite" rotate="auto" path="M50,400 Q150,200 250,250 T450,100" />
+            <path d="M0,-5 L3,-2 L3,0 L0,3 L-3,0 L-3,-2 Z" /><path d="M-6,0 L0,-2 L6,0" />
+          </g>
+          <g className="shipment-plane sp-green">
+            <animateMotion dur="5s" repeatCount="indefinite" rotate="auto" path="M0,300 Q200,100 300,200 T500,50" />
+            <path d="M0,-5 L3,-2 L3,0 L0,3 L-3,0 L-3,-2 Z" /><path d="M-6,0 L0,-2 L6,0" />
+          </g>
+          <g className="shipment-plane sp-orange">
+            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto" path="M100,450 Q250,300 350,350 T500,200" />
+            <path d="M0,-5 L3,-2 L3,0 L0,3 L-3,0 L-3,-2 Z" /><path d="M-6,0 L0,-2 L6,0" />
+          </g>
         </svg>
 
         {/* Orbiting rings */}
@@ -173,12 +182,27 @@ export default function Login({ onLogin }) {
           <line className="supply-line sl7" x1="460" y1="150" x2="490" y2="130" />
           <line className="supply-line sl8" x1="490" y1="130" x2="510" y2="160" />
 
-          {/* Moving shipment dots along routes */}
-          <circle r="3" className="shipment-dot sd-blue"><animateMotion dur="3s" repeatCount="indefinite" path="M460,150 L310,120" /></circle>
-          <circle r="3" className="shipment-dot sd-green"><animateMotion dur="4s" repeatCount="indefinite" path="M310,120 L130,140" /></circle>
-          <circle r="2.5" className="shipment-dot sd-yellow"><animateMotion dur="3.5s" repeatCount="indefinite" path="M460,150 L390,170" /></circle>
-          <circle r="2.5" className="shipment-dot sd-blue"><animateMotion dur="5s" repeatCount="indefinite" path="M530,175 L530,300" /></circle>
-          <circle r="2.5" className="shipment-dot sd-green"><animateMotion dur="4.5s" repeatCount="indefinite" path="M390,170 L310,120" /></circle>
+          {/* Moving airplane icons along routes */}
+          <g className="shipment-plane sp-blue">
+            <animateMotion dur="3s" repeatCount="indefinite" rotate="auto" path="M460,150 L310,120" />
+            <path d="M0,-4 L2,-1.5 L2,0 L0,2 L-2,0 L-2,-1.5 Z" /><path d="M-5,0 L0,-1.5 L5,0" />
+          </g>
+          <g className="shipment-plane sp-green">
+            <animateMotion dur="4s" repeatCount="indefinite" rotate="auto" path="M310,120 L130,140" />
+            <path d="M0,-4 L2,-1.5 L2,0 L0,2 L-2,0 L-2,-1.5 Z" /><path d="M-5,0 L0,-1.5 L5,0" />
+          </g>
+          <g className="shipment-plane sp-orange">
+            <animateMotion dur="3.5s" repeatCount="indefinite" rotate="auto" path="M460,150 L390,170" />
+            <path d="M0,-4 L2,-1.5 L2,0 L0,2 L-2,0 L-2,-1.5 Z" /><path d="M-5,0 L0,-1.5 L5,0" />
+          </g>
+          <g className="shipment-plane sp-blue">
+            <animateMotion dur="5s" repeatCount="indefinite" rotate="auto" path="M530,175 L530,300" />
+            <path d="M0,-4 L2,-1.5 L2,0 L0,2 L-2,0 L-2,-1.5 Z" /><path d="M-5,0 L0,-1.5 L5,0" />
+          </g>
+          <g className="shipment-plane sp-green">
+            <animateMotion dur="4.5s" repeatCount="indefinite" rotate="auto" path="M390,170 L310,120" />
+            <path d="M0,-4 L2,-1.5 L2,0 L0,2 L-2,0 L-2,-1.5 Z" /><path d="M-5,0 L0,-1.5 L5,0" />
+          </g>
 
           {/* Pulsing hub rings */}
           <circle cx="460" cy="150" r="8" className="hub-pulse" />

@@ -719,6 +719,12 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .route-dot.d2 { fill: #0efc6d; filter: drop-shadow(0 0 4px #0efc6d); }
 .route-dot.d3 { fill: #fdcb6e; filter: drop-shadow(0 0 4px #fdcb6e); }
 
+/* Airplane icons on routes */
+.shipment-plane path { opacity: 0.9; }
+.sp-blue path { fill: #007ff5; filter: drop-shadow(0 0 6px #007ff5); }
+.sp-green path { fill: #0efc6d; filter: drop-shadow(0 0 6px #0efc6d); }
+.sp-orange path { fill: #fdcb6e; filter: drop-shadow(0 0 6px #fdcb6e); }
+
 /* Orbiting rings */
 .hero-orbit {
   position: absolute; top: 50%; left: 50%; border-radius: 50%;
@@ -756,27 +762,6 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 }
 .supply-line.sl2, .supply-line.sl4 { stroke: rgba(14,252,109,0.1); animation-duration: 4s; }
 .supply-line.sl6, .supply-line.sl8 { stroke: rgba(253,203,110,0.1); animation-duration: 5s; }
-.shipment-dot { opacity: 0.9; }
-.sd-blue { fill: #007ff5; filter: drop-shadow(0 0 6px #007ff5); }
-.sd-green { fill: #0efc6d; filter: drop-shadow(0 0 6px #0efc6d); }
-.sd-yellow { fill: #fdcb6e; filter: drop-shadow(0 0 6px #fdcb6e); }
-/* Courier-specific shipment dots */
-.sd-dhl { fill: #FFCC00; filter: drop-shadow(0 0 6px #FFCC00); }
-.sd-ups { fill: #FFB500; filter: drop-shadow(0 0 6px #FFB500); }
-.sd-fedex { fill: #FF6600; filter: drop-shadow(0 0 6px #FF6600); }
-.sd-bluedart { fill: #0066CC; filter: drop-shadow(0 0 6px #0066CC); }
-.sd-usps { fill: #336699; filter: drop-shadow(0 0 6px #336699); }
-/* Courier labels on map */
-.map-courier-label {
-  font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-anchor: middle;
-  opacity: 0.5; animation: label-fade 3s ease-in-out infinite alternate;
-}
-.cl-dhl { fill: #FFCC00; }
-.cl-ups { fill: #FFB500; }
-.cl-fedex { fill: #FF6600; }
-.cl-bluedart { fill: #0066CC; }
-.cl-usps { fill: #336699; }
-@keyframes label-fade { 0% { opacity: 0.3; } 100% { opacity: 0.7; } }
 .hub-pulse {
   fill: none; stroke: #007ff5; stroke-width: 1; opacity: 0;
   animation: hub-ring 2.5s ease-out infinite;

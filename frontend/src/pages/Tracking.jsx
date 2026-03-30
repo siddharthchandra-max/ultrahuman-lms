@@ -406,7 +406,7 @@ export default function Tracking() {
                   <td style={{ fontSize: 11 }}>{s.trackingStatus?.lastEventTime ? formatDate(s.trackingStatus.lastEventTime) : '-'}</td>
                   <td style={{ fontSize: 11, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.trackingStatus?.lastEvent || '-'}</td>
                   <td style={{ fontSize: 11 }}>{s.trackingStatus?.currentMilestone || '-'}</td>
-                  <td style={{ fontSize: 11, color: 'var(--gray-400)' }}>{timeSince(s.updatedAt)}</td>
+                  <td style={{ fontSize: 11, color: 'var(--gray-400)' }}>{timeSince(s.trackingStatus?.lastTrackedAt || s.updatedAt)}</td>
                   <td>{statusBadge(s.status)}</td>
                   <td>{tatBadge()}</td>
                   <td>{naBadge()}</td>
