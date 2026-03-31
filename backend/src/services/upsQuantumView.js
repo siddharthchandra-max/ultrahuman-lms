@@ -6,6 +6,7 @@ const { computeTrackingStatus } = require('./dhlTracking');
 const UPS_CLIENT_ID = process.env.UPS_CLIENT_ID;
 const UPS_CLIENT_SECRET = process.env.UPS_CLIENT_SECRET;
 const UPS_ACCOUNT = process.env.UPS_ACCOUNT;
+const UPS_QV_NAME = process.env.UPS_QV_NAME || 'ULTRAQVD';
 const UPS_TOKEN_URL = 'https://onlinetools.ups.com/security/v1/oauth/token';
 const UPS_QV_URL = 'https://onlinetools.ups.com/api/quantumview/v1/subscription';
 
@@ -43,20 +44,24 @@ async function fetchUPSShipments(fromDate = null) {
     let shipmentData = [];
 
     try {
-      const qvResponse = await axios.post(UPS_QV_URL, {
+      const qvPayload = {
         QuantumViewRequest: {
           Request: {
             TransactionReference: { CustomerContext: 'UH_LMS_QV' },
           },
           SubscriptionRequest: {
-            Name: 'OutboundShipments',
+            Name: UPS_QV_NAME,
             DateTimeRange: {
               BeginDateTime: fromDate ? fromDate.replace(/-/g, '') + '000000' : getDateStr(30),
               EndDateTime: getDateStr(0),
             },
           },
         },
-      }, {
+      };
+
+      console.log(`[UPS QV] Calling QV API with subscription name: ${UPS_QV_NAME}, date range: ${qvPayload.QuantumViewRequest.SubscriptionRequest.DateTimeRange.BeginDateTime} - ${qvPayload.QuantumViewRequest.SubscriptionRequest.DateTimeRange.EndDateTime}`);
+
+      const qvResponse = await axios.post(UPS_QV_URL, qvPayload, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -66,6 +71,8 @@ async function fetchUPSShipments(fromDate = null) {
         timeout: 30000,
       });
 
+      console.log(`[UPS QV] Response status: ${qvResponse.status}, keys: ${JSON.stringify(Object.keys(qvResponse.data || {}))}`);
+
       const events = qvResponse.data?.QuantumViewResponse?.QuantumViewEvents;
       if (events?.SubscriptionEvents?.SubscriptionFile) {
         const files = Array.isArray(events.SubscriptionEvents.SubscriptionFile)
@@ -74,18 +81,37 @@ async function fetchUPSShipments(fromDate = null) {
 
         for (const file of files) {
           const origins = file.Origin ? (Array.isArray(file.Origin) ? file.Origin : [file.Origin]) : [];
+          const generics = file.Generic ? (Array.isArray(file.Generic) ? file.Generic : [file.Generic]) : [];
+          const deliveries = file.Delivery ? (Array.isArray(file.Delivery) ? file.Delivery : [file.Delivery]) : [];
+          const manifests = file.Manifest ? (Array.isArray(file.Manifest) ? file.Manifest : [file.Manifest]) : [];
+          const exceptions = file.Exception ? (Array.isArray(file.Exception) ? file.Exception : [file.Exception]) : [];
+
+          // Process Origin (outbound shipments)
           for (const origin of origins) {
             const pkgs = origin.Package ? (Array.isArray(origin.Package) ? origin.Package : [origin.Package]) : [];
             for (const pkg of pkgs) {
               shipmentData.push(parseQVPackage(pkg, origin));
             }
           }
+
+          // Process Manifest (pickup scan events)
+          for (const manifest of manifests) {
+            const pkgs = manifest.Package ? (Array.isArray(manifest.Package) ? manifest.Package : [manifest.Package]) : [];
+            for (const pkg of pkgs) {
+              shipmentData.push(parseQVPackage(pkg, manifest));
+            }
+          }
+
+          console.log(`[UPS QV] File events — Origins: ${origins.length}, Manifests: ${manifests.length}, Deliveries: ${deliveries.length}, Generics: ${generics.length}, Exceptions: ${exceptions.length}`);
         }
+      } else {
+        console.log(`[UPS QV] No SubscriptionFile in response. Full response snippet: ${JSON.stringify(qvResponse.data).substring(0, 500)}`);
       }
       console.log(`[UPS QV] Got ${shipmentData.length} shipments from Quantum View`);
     } catch (qvErr) {
-      // Quantum View may not be available — fall back to Shipping History
-      console.log(`[UPS QV] Quantum View not available (${qvErr.response?.status || qvErr.message}), trying Shipping History...`);
+      const errDetail = qvErr.response?.data ? JSON.stringify(qvErr.response.data).substring(0, 500) : qvErr.message;
+      console.error(`[UPS QV] Quantum View error — Status: ${qvErr.response?.status || 'N/A'}, Detail: ${errDetail}`);
+      console.log('[UPS QV] Falling back to Shipping History...');
       shipmentData = await fetchViaShippingHistory(token, fromDate);
     }
 
