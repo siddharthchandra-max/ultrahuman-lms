@@ -8,7 +8,7 @@ const UPS_CLIENT_SECRET = process.env.UPS_CLIENT_SECRET;
 const UPS_ACCOUNT = process.env.UPS_ACCOUNT;
 const UPS_QV_NAME = process.env.UPS_QV_NAME || 'ULTRAQVD';
 const UPS_TOKEN_URL = 'https://onlinetools.ups.com/security/v1/oauth/token';
-const UPS_QV_URL = 'https://onlinetools.ups.com/api/quantumview/v1/events';
+const UPS_QV_URL = 'https://onlinetools.ups.com/api/quantumview/v3/events';
 
 // Reuse token from upsTracking
 let cachedToken = null;
@@ -47,6 +47,7 @@ async function fetchUPSShipments(fromDate = null) {
       const qvPayload = {
         QuantumViewRequest: {
           Request: {
+            RequestAction: 'QVEvents',
             TransactionReference: { CustomerContext: 'UH_LMS_QV' },
           },
           SubscriptionRequest: {

@@ -91,9 +91,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 [data-theme="night"] .date-badge:hover { border-color: #58a6ff; color: #58a6ff; }
 [data-theme="night"] .btn-bulk-mgmt { background: #238636; box-shadow: 0 2px 6px rgba(35,134,54,0.3); }
 [data-theme="night"] .btn-bulk-mgmt:hover { background: #2ea043; }
-[data-theme="night"] .btn-oms-sync { background: #1f6feb; box-shadow: 0 2px 6px rgba(31,111,235,0.3); }
-[data-theme="night"] .btn-oms-sync:hover { background: #388bfd; }
-[data-theme="night"] .oms-sync-status { background: #1f6feb22; color: #58a6ff; }
 [data-theme="night"] .view-mode-toggle span { color: #8b949e; }
 [data-theme="night"] .view-mode-toggle span.active { color: #e6edf3; border-color: #58a6ff; }
 [data-theme="night"] .tracking-table-wrap { background: #0d1117; border-color: #21262d; }
@@ -183,7 +180,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 [data-theme="eye-care"] tr:hover td { background: #f0e9dc; }
 [data-theme="eye-care"] .date-badge { background: #faf6f0; border-color: #ddd4c4; color: #7d7264; }
 [data-theme="eye-care"] .btn-bulk-mgmt { background: #8b7355; box-shadow: 0 2px 6px rgba(139,115,85,0.2); }
-[data-theme="eye-care"] .btn-oms-sync { background: #6b8e5a; box-shadow: 0 2px 6px rgba(107,142,90,0.2); }
 [data-theme="eye-care"] .tracking-table-wrap { background: #faf6f0; border-color: #ddd4c4; }
 [data-theme="eye-care"] .stat-card, [data-theme="eye-care"] .card { background: #ede6d8; border-color: #ddd4c4; }
 [data-theme="eye-care"] .pagination button { background: #faf6f0; border-color: #ddd4c4; color: #5c5347; }
@@ -1168,18 +1164,6 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
   white-space: nowrap; transition: all 0.2s; box-shadow: 0 2px 6px rgba(26,35,126,0.2);
 }
 .btn-bulk-mgmt:hover { background: var(--navy-light); box-shadow: 0 4px 12px rgba(26,35,126,0.25); transform: translateY(-1px); }
-.btn-oms-sync {
-  display: flex; align-items: center; gap: 8px; padding: 8px 20px;
-  background: #0d6efd; color: #fff; border: none; border-radius: 8px;
-  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
-  white-space: nowrap; transition: all 0.2s; box-shadow: 0 2px 6px rgba(13,110,253,0.2);
-}
-.btn-oms-sync:hover { background: #0b5ed7; box-shadow: 0 4px 12px rgba(13,110,253,0.25); transform: translateY(-1px); }
-.btn-oms-sync:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-.oms-sync-status {
-  font-size: 12px; color: #0d6efd; padding: 6px 12px; background: #e8f0fe;
-  border-radius: 6px; margin-top: 4px; text-align: right;
-}
 /* Bulk Management Modal */
 .bulk-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;

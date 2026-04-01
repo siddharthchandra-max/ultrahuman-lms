@@ -84,27 +84,6 @@ const shipmentSchema = new mongoose.Schema({
   facilityCode: String,
   facilityName: String,
 
-  // OMS fields (from Metabase sync)
-  uhrId: { type: String, index: true, trim: true },
-  customerEmail: String,
-  customerPhone: String,
-  orderChannel: String,
-  orderSource: String,
-  shopifyOrderId: String,
-  shopifyOrderNumber: String,
-  shopifyStore: String,
-  serialNumber: String,
-  amountUSD: Number,
-  discountUSD: Number,
-  taxUSD: Number,
-  b2cFlag: String,
-  billingName: String,
-  billingAddress: String,
-  billingCity: String,
-  billingZip: String,
-  billingCountry: String,
-  omsStatus: String,
-  omsSyncedAt: Date,
 
   // Tracking
   trackingEvents: [trackingEventSchema],

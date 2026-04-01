@@ -164,21 +164,6 @@ function start() {
   });
 
   console.log('UPS shipment sync cron scheduled (every 30 min)');
-
-  // OMS Metabase sync — every 30 minutes
-  // Auto-imports new shipped orders from OMS (Metabase question 19100)
-  cron.schedule('*/30 * * * *', async () => {
-    console.log('[Cron] Running OMS Metabase sync...');
-    try {
-      const { syncFromMetabase } = require('../services/metabaseSync');
-      const result = await syncFromMetabase('2026-03-01');
-      console.log(`[Cron] OMS sync: ${result.created} new, ${result.updated} updated, ${result.skipped} skipped`);
-    } catch (err) {
-      console.error('[Cron] OMS sync error:', err.message);
-    }
-  });
-
-  console.log('OMS Metabase sync cron scheduled (every 30 min)');
 }
 
 module.exports = { start };
