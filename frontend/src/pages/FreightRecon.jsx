@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api, { formatINR } from '../utils/api';
 
 const COURIERS = ['DHL', 'UPS', 'BlueDart', 'FedEx'];
-const CHARGE_TYPES = ['Express Export', 'Express Import', 'Domestic'];
-const BUSINESS_TYPES = ['B2C', 'B2B', 'All'];
 
 function formatCr(val) {
   if (!val) return '0';
@@ -19,8 +17,6 @@ export default function FreightRecon() {
   const [zoneRates, setZoneRates] = useState([]);
   const [courier, setCourier] = useState('');
   const [month, setMonth] = useState('');
-  const [chargeType, setChargeType] = useState('');
-  const [businessType, setBusinessType] = useState('');
   const [months, setMonths] = useState([]);
 
   useEffect(() => {
@@ -33,13 +29,11 @@ export default function FreightRecon() {
       const params = {};
       if (courier) params.courier = courier;
       if (month) params.month = month;
-      if (chargeType) params.chargeType = chargeType;
-      if (businessType) params.businessType = businessType;
 
       const [summaryRes, surchargeRes, rateRes] = await Promise.all([
         api.get('/recon/summary', { params }),
         api.get('/recon/surcharges', { params: { courier, month } }),
-        api.get('/recon/zone-rates', { params: { courier, businessType } }),
+        api.get('/recon/zone-rates', { params: { courier } }),
       ]);
 
       setSummary(summaryRes.data);
@@ -47,7 +41,7 @@ export default function FreightRecon() {
       setZoneRates(rateRes.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [courier, month, chargeType, businessType]);
+  }, [courier, month]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -67,15 +61,7 @@ export default function FreightRecon() {
           <option value="">All Couriers</option>
           {COURIERS.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select className="filter-select" value={chargeType} onChange={e => setChargeType(e.target.value)}>
-          <option value="">All Charge Types</option>
-          {CHARGE_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select className="filter-select" value={businessType} onChange={e => setBusinessType(e.target.value)}>
-          <option value="">All Business Types</option>
-          {BUSINESS_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select className="filter-select" value={month} onChange={e => setMonth(e.target.value)}>
+<select className="filter-select" value={month} onChange={e => setMonth(e.target.value)}>
           <option value="">All Months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
@@ -184,7 +170,7 @@ export default function FreightRecon() {
             {/* Zone Rate Cards */}
             <div className="card">
               <div style={{ padding: '12px 16px', fontWeight: 700, fontSize: 13, borderBottom: '1px solid var(--gray-200)' }}>
-                {courier || 'DHL'} {businessType || ''} Rate Card
+                {courier || 'DHL'} Rate Card
               </div>
               {zoneRates.length === 0 ? (
                 <div style={{ padding: 24, textAlign: 'center', color: 'var(--gray-400)', fontSize: 13 }}>
