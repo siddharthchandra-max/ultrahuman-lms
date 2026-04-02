@@ -7,6 +7,7 @@ import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
 import Upload from './pages/Upload';
 import Tracking from './pages/Tracking';
+import FreightRecon from './pages/FreightRecon';
 import ShipmentDetail from './pages/ShipmentDetail';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -64,6 +65,7 @@ export default function App() {
     '/dashboard': 'Dashboard',
     '/shipments': 'Shipments',
     '/tracking': 'Shipment Tracking',
+    '/freight-recon': 'Freight Reconciliation',
     '/invoices': 'Invoices',
     '/reports': 'Reports & Analytics',
     '/upload': 'Upload Data',
@@ -86,6 +88,7 @@ export default function App() {
             <Route path="/shipments" element={<Shipments />} />
             <Route path="/tracking" element={<Tracking />} />
             <Route path="/tracking/:awb" element={<ShipmentDetail />} />
+            <Route path="/freight-recon" element={<FreightRecon />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/upload" element={<Upload />} />

@@ -101,6 +101,10 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 [data-theme="night"] .pagination button:hover { background: #21262d; }
 [data-theme="night"] .pagination button.active { background: #1f6feb; color: #fff; }
 [data-theme="night"] .stat-card, [data-theme="night"] .card { background: #161b22; border-color: #21262d; }
+[data-theme="night"] .filter-chip { background: #161b22; border-color: #21262d; color: #8b949e; }
+[data-theme="night"] .filter-chip.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+[data-theme="night"] .expanded-row td { background: #0d1117; }
+[data-theme="night"] .recon-field { border-color: #21262d; }
 [data-theme="night"] .login-card { background: #161b22; }
 [data-theme="night"] input, [data-theme="night"] select, [data-theme="night"] textarea { background: #0d1117; border-color: #21262d; color: #e6edf3; }
 /* Night — tracking page */
@@ -477,6 +481,26 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-300); }
 .btn-sm { padding: 6px 14px; font-size: 12px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ====== FILTER CHIPS ====== */
+.filter-chip {
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--gray-200); background: var(--card-bg, #fff);
+  font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; color: var(--text-secondary, #6b7280);
+  transition: all 0.15s;
+}
+.filter-chip:hover { border-color: var(--primary, #6c5ce7); color: var(--primary, #6c5ce7); }
+.filter-chip.active { background: var(--primary, #6c5ce7); color: #fff; border-color: var(--primary, #6c5ce7); }
+
+/* ====== FREIGHT RECON DETAIL ====== */
+.expanded-row td { padding: 0 !important; background: var(--hover-bg, #f9fafb); }
+.recon-detail { padding: 16px 24px; }
+.recon-detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+.recon-detail-section h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary, #6c5ce7); margin-bottom: 10px; }
+.recon-field { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid var(--gray-100, #f3f4f6); }
+.recon-field label { color: var(--text-secondary, #6b7280); font-weight: 500; }
+.recon-field span { font-weight: 500; color: var(--text-primary, #111); }
+.recon-field.total { border-top: 2px solid var(--primary, #6c5ce7); border-bottom: none; padding-top: 8px; margin-top: 4px; }
+.recon-field.total label, .recon-field.total span { font-weight: 700; font-size: 13px; color: var(--primary, #6c5ce7); }
 
 /* ====== PAGINATION ====== */
 .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 13px; color: var(--gray-500); }
