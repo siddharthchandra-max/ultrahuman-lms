@@ -19,6 +19,7 @@ app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/tracking', require('./routes/tracking'));
+app.use('/api/recon', require('./routes/recon'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 

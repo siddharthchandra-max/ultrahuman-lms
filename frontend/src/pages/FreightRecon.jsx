@@ -1,224 +1,263 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api, { formatINR, formatDate } from '../utils/api';
+import api, { formatINR } from '../utils/api';
 
-const COURIERS = ['All', 'DHL', 'UPS', 'BlueDart', 'FedEx'];
+const COURIERS = ['DHL', 'UPS', 'BlueDart', 'FedEx'];
+const CHARGE_TYPES = ['Express Export', 'Express Import', 'Domestic'];
+const BUSINESS_TYPES = ['B2C', 'B2B', 'All'];
+
+function formatCr(val) {
+  if (!val) return '0';
+  if (val >= 10000000) return (val / 10000000).toFixed(2) + 'Cr';
+  if (val >= 100000) return (val / 100000).toFixed(2) + 'L';
+  return val.toLocaleString('en-IN');
+}
 
 export default function FreightRecon() {
-  const [shipments, setShipments] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [courier, setCourier] = useState('All');
-  const [month, setMonth] = useState('');
-  const [months, setMonths] = useState([]);
   const [summary, setSummary] = useState(null);
-  const [expandedRow, setExpandedRow] = useState(null);
-  const [sortBy, setSortBy] = useState('shipmentDate');
-  const [sortOrder, setSortOrder] = useState(-1);
+  const [surcharges, setSurcharges] = useState([]);
+  const [zoneRates, setZoneRates] = useState([]);
+  const [courier, setCourier] = useState('');
+  const [month, setMonth] = useState('');
+  const [chargeType, setChargeType] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [months, setMonths] = useState([]);
 
   useEffect(() => {
     api.get('/shipments/filters').then(r => setMonths(r.data.months || [])).catch(() => {});
   }, []);
 
-  const fetch = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { page, limit: 50, sortBy, sortOrder };
-      if (search) params.search = search;
-      if (courier !== 'All') params.courier = courier;
+      const params = {};
+      if (courier) params.courier = courier;
       if (month) params.month = month;
-      const { data } = await api.get('/shipments', { params });
-      setShipments(data.shipments || []);
-      setPagination(data.pagination || { page: 1, pages: 1, total: 0 });
+      if (chargeType) params.chargeType = chargeType;
+      if (businessType) params.businessType = businessType;
 
-      // Calculate summary from current page data
-      const all = data.shipments || [];
-      const totalFreight = all.reduce((s, r) => s + (r.totalExclVAT || 0), 0);
-      const totalTax = all.reduce((s, r) => s + (r.totalTax || 0), 0);
-      const totalInclVAT = all.reduce((s, r) => s + (r.totalInclVAT || 0), 0);
-      const totalFuel = all.reduce((s, r) => s + (r.fuelSurcharge || 0), 0);
-      const totalDuties = all.reduce((s, r) => s + (r.importExportDuties || 0) + (r.importExportTaxes || 0), 0);
-      const totalExtra = all.reduce((s, r) => s + (r.totalExtraCharges || 0), 0);
-      const withCharges = all.filter(r => r.totalExclVAT > 0).length;
-      const withoutCharges = all.filter(r => !r.totalExclVAT || r.totalExclVAT === 0).length;
-      setSummary({ totalFreight, totalTax, totalInclVAT, totalFuel, totalDuties, totalExtra, withCharges, withoutCharges, total: data.pagination?.total || 0 });
+      const [summaryRes, surchargeRes, rateRes] = await Promise.all([
+        api.get('/recon/summary', { params }),
+        api.get('/recon/surcharges', { params: { courier, month } }),
+        api.get('/recon/zone-rates', { params: { courier, businessType } }),
+      ]);
+
+      setSummary(summaryRes.data);
+      setSurcharges(surchargeRes.data.services || []);
+      setZoneRates(rateRes.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [search, courier, month, sortBy, sortOrder]);
+  }, [courier, month, chargeType, businessType]);
 
-  useEffect(() => { fetch(1); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleSort = (col) => {
-    if (sortBy === col) {
-      setSortOrder(o => o === -1 ? 1 : -1);
-    } else {
-      setSortBy(col);
-      setSortOrder(-1);
-    }
-  };
+  const totals = summary?.totals || {};
+  const commercial = summary?.commercialSummary || [];
+  const zoneMix = summary?.zoneMix || [];
+  const totalZone = zoneMix.reduce((s, z) => s + z.count, 0);
 
-  const sortIcon = (col) => {
-    if (sortBy !== col) return <span style={{ opacity: 0.3, fontSize: 10 }}>⇅</span>;
-    return <span style={{ fontSize: 10 }}>{sortOrder === -1 ? '↓' : '↑'}</span>;
-  };
-
-  const reconStatus = (s) => {
-    if (!s.invoiceNumber) return <span className="badge badge-gray">No Invoice</span>;
-    if (!s.totalExclVAT || s.totalExclVAT === 0) return <span className="badge badge-orange">Unbilled</span>;
-    if (s.totalExtraCharges > 0) return <span className="badge badge-red">Has Extras</span>;
-    return <span className="badge badge-green">Matched</span>;
-  };
+  // Zone mix colors
+  const zoneColors = ['#6c5ce7', '#0984e3', '#00b894', '#fdcb6e', '#e17055', '#d63031', '#a29bfe', '#74b9ff', '#55efc4', '#ffeaa7', '#fab1a0', '#ff7675'];
 
   return (
-    <div>
-      {/* Summary Cards */}
-      {summary && (
-        <div className="metric-grid cols-4">
-          <div className="metric-card blue">
-            <div className="metric-label">Total Shipments</div>
-            <div className="metric-value">{summary.total.toLocaleString()}</div>
-            <div className="metric-sub">{summary.withCharges} billed / {summary.withoutCharges} unbilled</div>
-          </div>
-          <div className="metric-card green">
-            <div className="metric-label">Total Freight (Excl. VAT)</div>
-            <div className="metric-value" style={{ fontSize: 20 }}>{formatINR(summary.totalFreight)}</div>
-            <div className="metric-sub">Tax: {formatINR(summary.totalTax)}</div>
-          </div>
-          <div className="metric-card purple">
-            <div className="metric-label">Fuel Surcharge</div>
-            <div className="metric-value" style={{ fontSize: 20 }}>{formatINR(summary.totalFuel)}</div>
-            <div className="metric-sub">Duties: {formatINR(summary.totalDuties)}</div>
-          </div>
-          <div className="metric-card orange">
-            <div className="metric-label">Extra Charges</div>
-            <div className="metric-value" style={{ fontSize: 20 }}>{formatINR(summary.totalExtra)}</div>
-            <div className="metric-sub">Total Incl. VAT: {formatINR(summary.totalInclVAT)}</div>
-          </div>
-        </div>
-      )}
-
+    <div className="recon-page">
       {/* Filters */}
-      <div className="filter-bar">
-        <input className="search-input" placeholder="Search AWB, Invoice #..." value={search} onChange={e => setSearch(e.target.value)} />
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {COURIERS.map(c => (
-            <button key={c} className={`filter-chip ${courier === c ? 'active' : ''}`} onClick={() => setCourier(c)}>{c}</button>
-          ))}
-        </div>
+      <div className="filter-bar" style={{ marginBottom: 16 }}>
+        <select className="filter-select" value={courier} onChange={e => setCourier(e.target.value)}>
+          <option value="">All Couriers</option>
+          {COURIERS.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select className="filter-select" value={chargeType} onChange={e => setChargeType(e.target.value)}>
+          <option value="">All Charge Types</option>
+          {CHARGE_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select className="filter-select" value={businessType} onChange={e => setBusinessType(e.target.value)}>
+          <option value="">All Business Types</option>
+          {BUSINESS_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
         <select className="filter-select" value={month} onChange={e => setMonth(e.target.value)}>
           <option value="">All Months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
 
-      {/* Table */}
-      <div className="card">
-        <div className="table-wrap" style={{ overflowX: 'auto' }}>
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: 30 }}></th>
-                <th onClick={() => handleSort('awb')} style={{ cursor: 'pointer' }}>AWB {sortIcon('awb')}</th>
-                <th onClick={() => handleSort('shipmentDate')} style={{ cursor: 'pointer' }}>Ship Date {sortIcon('shipmentDate')}</th>
-                <th>Courier</th>
-                <th>Invoice #</th>
-                <th>Dest</th>
-                <th onClick={() => handleSort('weight')} style={{ cursor: 'pointer' }}>Weight {sortIcon('weight')}</th>
-                <th onClick={() => handleSort('weightCharge')} style={{ cursor: 'pointer' }}>Weight Charge {sortIcon('weightCharge')}</th>
-                <th onClick={() => handleSort('fuelSurcharge')} style={{ cursor: 'pointer' }}>Fuel {sortIcon('fuelSurcharge')}</th>
-                <th onClick={() => handleSort('totalExtraCharges')} style={{ cursor: 'pointer' }}>Extras {sortIcon('totalExtraCharges')}</th>
-                <th onClick={() => handleSort('totalExclVAT')} style={{ cursor: 'pointer' }}>Excl. VAT {sortIcon('totalExclVAT')}</th>
-                <th onClick={() => handleSort('totalTax')} style={{ cursor: 'pointer' }}>Tax {sortIcon('totalTax')}</th>
-                <th onClick={() => handleSort('totalInclVAT')} style={{ cursor: 'pointer' }}>Incl. VAT {sortIcon('totalInclVAT')}</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={14} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-500)' }}>Loading...</td></tr>
-              ) : shipments.length === 0 ? (
-                <tr><td colSpan={14} style={{ padding: 40, textAlign: 'center', color: 'var(--gray-500)' }}>No shipments found</td></tr>
-              ) : shipments.map(s => (
-                <React.Fragment key={s._id}>
-                  <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedRow(expandedRow === s._id ? null : s._id)}>
-                    <td style={{ fontSize: 10, color: 'var(--gray-400)' }}>{expandedRow === s._id ? '▼' : '▶'}</td>
-                    <td style={{ fontWeight: 600, fontSize: 12, fontFamily: 'monospace' }}>{s.awb || '-'}</td>
-                    <td style={{ fontSize: 12 }}>{s.shipmentDate ? formatDate(s.shipmentDate) : '-'}</td>
-                    <td><span className="badge badge-blue" style={{ fontSize: 10 }}>{s.courier || '-'}</span></td>
-                    <td style={{ fontSize: 12 }}>{s.invoiceNumber || '-'}</td>
-                    <td style={{ fontSize: 12 }}>{s.destCode || s.destCity || '-'}</td>
-                    <td style={{ fontSize: 12 }}>{s.weight ? `${s.weight.toFixed(1)} kg` : '-'}</td>
-                    <td style={{ fontSize: 12 }}>{formatINR(s.weightCharge)}</td>
-                    <td style={{ fontSize: 12 }}>{formatINR(s.fuelSurcharge)}</td>
-                    <td style={{ fontSize: 12, color: s.totalExtraCharges > 0 ? '#ef4444' : undefined, fontWeight: s.totalExtraCharges > 0 ? 600 : undefined }}>
-                      {formatINR(s.totalExtraCharges)}
-                    </td>
-                    <td style={{ fontSize: 12 }}>{formatINR(s.totalExclVAT)}</td>
-                    <td style={{ fontSize: 12 }}>{formatINR(s.totalTax)}</td>
-                    <td style={{ fontSize: 12, fontWeight: 600 }}>{formatINR(s.totalInclVAT)}</td>
-                    <td>{reconStatus(s)}</td>
-                  </tr>
-                  {expandedRow === s._id && (
-                    <tr className="expanded-row">
-                      <td colSpan={14}>
-                        <div className="recon-detail">
-                          <div className="recon-detail-grid">
-                            <div className="recon-detail-section">
-                              <h4>Shipment Info</h4>
-                              <div className="recon-field"><label>AWB</label><span>{s.awb || '-'}</span></div>
-                              <div className="recon-field"><label>Shipment #</label><span>{s.shipmentNumber || '-'}</span></div>
-                              <div className="recon-field"><label>Invoice #</label><span>{s.invoiceNumber || '-'}</span></div>
-                              <div className="recon-field"><label>Product</label><span>{s.productName || s.product || '-'}</span></div>
-                              <div className="recon-field"><label>Courier</label><span>{s.courier || '-'}</span></div>
-                              <div className="recon-field"><label>Origin</label><span>{s.originName || s.originCode || '-'}</span></div>
-                              <div className="recon-field"><label>Destination</label><span>{s.destName || s.destCode || '-'} ({s.destCity || '-'})</span></div>
-                              <div className="recon-field"><label>Weight</label><span>{s.weight ? `${s.weight.toFixed(2)} kg` : '-'}</span></div>
-                              <div className="recon-field"><label>Pieces</label><span>{s.pieces || '-'}</span></div>
-                            </div>
-                            <div className="recon-detail-section">
-                              <h4>Charge Breakdown</h4>
-                              <div className="recon-field"><label>Weight Charge</label><span>{formatINR(s.weightCharge)}</span></div>
-                              <div className="recon-field"><label>Fuel Surcharge</label><span>{formatINR(s.fuelSurcharge)}</span></div>
-                              <div className="recon-field"><label>Import/Export Duties</label><span>{formatINR(s.importExportDuties)}</span></div>
-                              <div className="recon-field"><label>Import/Export Taxes</label><span>{formatINR(s.importExportTaxes)}</span></div>
-                              <div className="recon-field"><label>Clearance Processing</label><span>{formatINR(s.clearanceProcessing)}</span></div>
-                              <div className="recon-field"><label>Duty Tax Paid</label><span>{formatINR(s.dutyTaxPaid)}</span></div>
-                              <div className="recon-field"><label>Remote Area Delivery</label><span style={{ color: s.remoteAreaDelivery > 0 ? '#ef4444' : undefined }}>{formatINR(s.remoteAreaDelivery)}</span></div>
-                              <div className="recon-field"><label>Merchandise Process</label><span>{formatINR(s.merchandiseProcess)}</span></div>
-                              <div className="recon-field"><label>Bonded Storage</label><span>{formatINR(s.bondedStorage)}</span></div>
-                              <div className="recon-field"><label>Address Correction</label><span style={{ color: s.addressCorrection > 0 ? '#ef4444' : undefined }}>{formatINR(s.addressCorrection)}</span></div>
-                              <div className="recon-field"><label>Go Green Carbon</label><span>{formatINR(s.goGreenCarbon)}</span></div>
-                              <div className="recon-field"><label>Regulatory Charges</label><span>{formatINR(s.regulatoryCharges)}</span></div>
-                              <div className="recon-field"><label>Insurance</label><span>{formatINR(s.insuranceCharge)}</span></div>
-                            </div>
-                            <div className="recon-detail-section">
-                              <h4>Totals</h4>
-                              <div className="recon-field"><label>Extra Charges</label><span style={{ color: s.totalExtraCharges > 0 ? '#ef4444' : undefined, fontWeight: 600 }}>{formatINR(s.totalExtraCharges)}</span></div>
-                              <div className="recon-field"><label>Total Excl. VAT</label><span style={{ fontWeight: 600 }}>{formatINR(s.totalExclVAT)}</span></div>
-                              <div className="recon-field"><label>Tax</label><span>{formatINR(s.totalTax)}</span></div>
-                              <div className="recon-field total"><label>Total Incl. VAT</label><span>{formatINR(s.totalInclVAT)}</span></div>
-                            </div>
-                          </div>
+      {loading ? (
+        <div style={{ padding: 60, textAlign: 'center', color: 'var(--gray-400)' }}>Loading reconciliation data...</div>
+      ) : (
+        <>
+          {/* Row 1: Summary Cards + Zone Mix */}
+          <div className="recon-top-row">
+            <div className="recon-cards-col">
+              <div className="recon-summary-grid">
+                <div className="recon-card">
+                  <div className="recon-card-label">Total Orders Shipped</div>
+                  <div className="recon-card-value">{(totals.totalOrders || 0).toLocaleString()}</div>
+                </div>
+                <div className="recon-card">
+                  <div className="recon-card-label">{courier || 'All'} AOC</div>
+                  <div className="recon-card-value">{totals.avgOrderCost ? formatINR(Math.round(totals.avgOrderCost)) : '0'}</div>
+                </div>
+                <div className="recon-card">
+                  <div className="recon-card-label">Total Shipment Cost Excl GST</div>
+                  <div className="recon-card-value">{formatCr(totals.totalCostExclGST || 0)}</div>
+                </div>
+                <div className="recon-card">
+                  <div className="recon-card-label">Charge Discrepancy %</div>
+                  <div className="recon-card-value" style={{ color: parseFloat(summary?.discrepancyPct || 0) > 0 ? '#ef4444' : '#10b981' }}>
+                    {summary?.discrepancyPct || '0'}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="recon-zone-col">
+              <div className="card" style={{ height: '100%' }}>
+                <div style={{ padding: '12px 16px', fontWeight: 700, fontSize: 13 }}>Zone Mix</div>
+                <div className="zone-chart">
+                  {/* Simple horizontal bar chart */}
+                  {zoneMix.slice(0, 12).map((z, i) => {
+                    const pct = totalZone > 0 ? ((z.count / totalZone) * 100) : 0;
+                    return (
+                      <div key={z._id || 'unknown'} className="zone-bar-row">
+                        <div className="zone-bar-label">{z._id || 'Unknown'}</div>
+                        <div className="zone-bar-track">
+                          <div className="zone-bar-fill" style={{ width: `${pct}%`, background: zoneColors[i % zoneColors.length] }} />
                         </div>
+                        <div className="zone-bar-pct">{pct.toFixed(1)}%</div>
+                        <div className="zone-bar-count">{z.count}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Commercial Summary Table */}
+          <div className="card" style={{ marginTop: 16 }}>
+            <div style={{ padding: '12px 16px', fontWeight: 700, fontSize: 13, borderBottom: '1px solid var(--gray-200)' }}>
+              Commercial Summary
+            </div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Count</th>
+                    <th style={{ textAlign: 'right' }}>Actual Charge</th>
+                    <th style={{ textAlign: 'right' }}>Expected Charge</th>
+                    <th style={{ textAlign: 'right' }}>Difference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commercial.map(row => (
+                    <tr key={row.status}>
+                      <td>
+                        <span className={`badge ${row.status === 'Match' ? 'badge-green' : row.status === 'Charged Less' ? 'badge-blue' : row.status === 'Charged More' ? 'badge-red' : 'badge-orange'}`}>
+                          {row.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 500 }}>{row.count.toLocaleString()}</td>
+                      <td style={{ textAlign: 'right' }}>{row.actualCharge.toLocaleString('en-IN')}</td>
+                      <td style={{ textAlign: 'right' }}>{row.expectedCharge.toLocaleString('en-IN')}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600, color: row.difference > 0 ? '#ef4444' : row.difference < 0 ? '#10b981' : undefined }}>
+                        {row.difference.toLocaleString('en-IN')}
                       </td>
                     </tr>
+                  ))}
+                  {commercial.length > 0 && (
+                    <tr style={{ fontWeight: 700, borderTop: '2px solid var(--gray-300)' }}>
+                      <td>Total</td>
+                      <td style={{ textAlign: 'right' }}>{commercial.reduce((s, r) => s + r.count, 0).toLocaleString()}</td>
+                      <td style={{ textAlign: 'right' }}>{commercial.reduce((s, r) => s + r.actualCharge, 0).toLocaleString('en-IN')}</td>
+                      <td style={{ textAlign: 'right' }}>{commercial.reduce((s, r) => s + r.expectedCharge, 0).toLocaleString('en-IN')}</td>
+                      <td style={{ textAlign: 'right', color: '#ef4444' }}>{commercial.reduce((s, r) => s + r.difference, 0).toLocaleString('en-IN')}</td>
+                    </tr>
                   )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      {/* Pagination */}
-      <div className="pagination">
-        <span>{pagination.total} shipments</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => fetch(pagination.page - 1)} disabled={pagination.page <= 1}>Previous</button>
-          <span style={{ padding: '6px 12px', fontSize: 13 }}>Page {pagination.page} / {pagination.pages}</span>
-          <button className="btn btn-secondary btn-sm" onClick={() => fetch(pagination.page + 1)} disabled={pagination.page >= pagination.pages}>Next</button>
-        </div>
-      </div>
+          {/* Row 3: Zone Rate Cards + Services & Surcharges side by side */}
+          <div className="recon-bottom-row">
+            {/* Zone Rate Cards */}
+            <div className="card">
+              <div style={{ padding: '12px 16px', fontWeight: 700, fontSize: 13, borderBottom: '1px solid var(--gray-200)' }}>
+                {courier || 'DHL'} {businessType || ''} Rate Card
+              </div>
+              {zoneRates.length === 0 ? (
+                <div style={{ padding: 24, textAlign: 'center', color: 'var(--gray-400)', fontSize: 13 }}>
+                  No rate cards configured. Upload rate cards to enable reconciliation.
+                </div>
+              ) : (
+                <div className="table-wrap" style={{ overflowX: 'auto' }}>
+                  <table style={{ fontSize: 11 }}>
+                    <thead>
+                      <tr>
+                        <th>Zone</th>
+                        <th>Business</th>
+                        <th>Fuel %</th>
+                        {zoneRates[0]?.weightSlabs?.map((ws, i) => (
+                          <th key={i} style={{ textAlign: 'right' }}>{ws.minWeight}-{ws.maxWeight}kg</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {zoneRates.map(rc => (
+                        <tr key={rc._id}>
+                          <td style={{ fontWeight: 600 }}>{rc.zone}</td>
+                          <td>{rc.businessType}</td>
+                          <td>{rc.fuelSurchargePercent}%</td>
+                          {rc.weightSlabs?.map((ws, i) => (
+                            <td key={i} style={{ textAlign: 'right' }}>{ws.rate.toLocaleString('en-IN')}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Services & Surcharges */}
+            <div className="card">
+              <div style={{ padding: '12px 16px', fontWeight: 700, fontSize: 13, borderBottom: '1px solid var(--gray-200)' }}>
+                Services & Surcharges
+              </div>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Service</th>
+                      <th>Type</th>
+                      <th style={{ textAlign: 'right' }}>Total Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {surcharges.length === 0 ? (
+                      <tr><td colSpan={3} style={{ padding: 24, textAlign: 'center', color: 'var(--gray-400)', fontSize: 13 }}>No surcharge data</td></tr>
+                    ) : surcharges.map(s => (
+                      <tr key={s.name}>
+                        <td style={{ fontWeight: 500, fontSize: 12 }}>{s.name}</td>
+                        <td><span className="badge badge-gray" style={{ fontSize: 10 }}>{s.type}</span></td>
+                        <td style={{ textAlign: 'right', fontWeight: 500 }}>{formatINR(s.total)}</td>
+                      </tr>
+                    ))}
+                    {surcharges.length > 0 && (
+                      <tr style={{ fontWeight: 700, borderTop: '2px solid var(--gray-300)' }}>
+                        <td>Total</td>
+                        <td></td>
+                        <td style={{ textAlign: 'right' }}>{formatINR(surcharges.reduce((s, r) => s + r.total, 0))}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

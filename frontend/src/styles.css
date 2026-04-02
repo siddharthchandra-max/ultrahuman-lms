@@ -103,8 +103,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 [data-theme="night"] .stat-card, [data-theme="night"] .card { background: #161b22; border-color: #21262d; }
 [data-theme="night"] .filter-chip { background: #161b22; border-color: #21262d; color: #8b949e; }
 [data-theme="night"] .filter-chip.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
-[data-theme="night"] .expanded-row td { background: #0d1117; }
-[data-theme="night"] .recon-field { border-color: #21262d; }
+[data-theme="night"] .recon-card { background: #161b22; border-color: #21262d; }
+[data-theme="night"] .recon-card-value { color: #e6edf3; }
+[data-theme="night"] .zone-bar-track { background: #21262d; }
 [data-theme="night"] .login-card { background: #161b22; }
 [data-theme="night"] input, [data-theme="night"] select, [data-theme="night"] textarea { background: #0d1117; border-color: #21262d; color: #e6edf3; }
 /* Night — tracking page */
@@ -491,16 +492,26 @@ tbody tr:hover { background: rgba(108,92,231,0.02); }
 .filter-chip:hover { border-color: var(--primary, #6c5ce7); color: var(--primary, #6c5ce7); }
 .filter-chip.active { background: var(--primary, #6c5ce7); color: #fff; border-color: var(--primary, #6c5ce7); }
 
-/* ====== FREIGHT RECON DETAIL ====== */
-.expanded-row td { padding: 0 !important; background: var(--hover-bg, #f9fafb); }
-.recon-detail { padding: 16px 24px; }
-.recon-detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-.recon-detail-section h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary, #6c5ce7); margin-bottom: 10px; }
-.recon-field { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid var(--gray-100, #f3f4f6); }
-.recon-field label { color: var(--text-secondary, #6b7280); font-weight: 500; }
-.recon-field span { font-weight: 500; color: var(--text-primary, #111); }
-.recon-field.total { border-top: 2px solid var(--primary, #6c5ce7); border-bottom: none; padding-top: 8px; margin-top: 4px; }
-.recon-field.total label, .recon-field.total span { font-weight: 700; font-size: 13px; color: var(--primary, #6c5ce7); }
+/* ====== FREIGHT RECON PAGE ====== */
+.recon-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.recon-cards-col .recon-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 100%; }
+.recon-card {
+  background: var(--card-bg, #fff); border: 1px solid var(--gray-200, #e5e7eb); border-radius: var(--radius, 10px);
+  padding: 20px; display: flex; flex-direction: column; justify-content: center;
+}
+.recon-card-label { font-size: 12px; color: var(--text-secondary, #6b7280); font-weight: 500; margin-bottom: 8px; }
+.recon-card-value { font-size: 28px; font-weight: 700; color: var(--text-primary, #111); letter-spacing: -0.5px; }
+.zone-chart { padding: 8px 16px 16px; }
+.zone-bar-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.zone-bar-label { font-size: 11px; font-weight: 500; color: var(--text-secondary, #6b7280); min-width: 70px; text-align: right; }
+.zone-bar-track { flex: 1; height: 14px; background: var(--gray-100, #f3f4f6); border-radius: 4px; overflow: hidden; }
+.zone-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.zone-bar-pct { font-size: 10px; font-weight: 600; color: var(--text-secondary, #6b7280); min-width: 40px; text-align: right; }
+.zone-bar-count { font-size: 10px; color: var(--gray-400); min-width: 35px; text-align: right; }
+.recon-bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+@media (max-width: 900px) {
+  .recon-top-row, .recon-bottom-row { grid-template-columns: 1fr; }
+}
 
 /* ====== PAGINATION ====== */
 .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 13px; color: var(--gray-500); }
